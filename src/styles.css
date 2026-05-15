@@ -119,7 +119,9 @@ body {
   margin-top: -17px;
 }
 
-.section {
+/* Fixed overlays (pre-intro video + loading screen) */
+.section.pre-intro-video-section,
+.section.loading-screen-section {
   position: fixed;
   inset: 0;
   opacity: 0;
@@ -127,17 +129,13 @@ body {
   transition: opacity 0.4s ease;
   display: grid;
   place-items: center;
-  padding: 2rem;
+  z-index: 92;
 }
 
-.section.active {
+.section.pre-intro-video-section.active,
+.section.loading-screen-section.active {
   opacity: 1;
   pointer-events: all;
-}
-
-.section.chapter-section {
-  overflow-y: auto;
-  display: block;
 }
 
 .opening .night-sky {
@@ -370,19 +368,19 @@ body {
   opacity: 0;
 }
 
-.opening.active .title-main {
+.opening.opening--active .title-main {
   opacity: 1;
 }
 
-.opening.active .title-letter {
+.opening.opening--active .title-letter {
   animation: letterDrawIn 0.5s ease-out forwards;
 }
 
-.opening.active .title-sub {
+.opening.opening--active .title-sub {
   animation: openingFadeIn 1s ease-out 0.4s forwards;
 }
 
-.opening.active .enter-btn {
+.opening.opening--active .enter-btn {
   animation: openingFadeIn 0.9s ease-out 0.8s forwards;
 }
 
@@ -1896,4 +1894,90 @@ body {
 
 .story-step.active .story-step-dot {
   background: rgba(var(--text-rgb), 0.98);
+}
+
+/* ─── Horizontal scroll architecture ──────────────────────────────────────── */
+
+.h-scroll-track {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: row;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.h-scroll-track::-webkit-scrollbar {
+  display: none;
+}
+
+.h-panel {
+  flex: 0 0 100vw;
+  width: 100vw;
+  height: 100vh;
+  scroll-snap-align: start;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Panels whose content exceeds 100vh — scrollable vertically */
+.h-panel--scrollable {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Panels that center their content (intro, etc.) */
+.h-panel--centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+/* Opening panel — fills panel, background is absolute night sky */
+.opening {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+/* Intro panel wrapper */
+.slide-up {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+/* MapHub fills its panel */
+.map-hub-section {
+  width: 100%;
+  height: 100%;
+}
+
+/* Hero panels: fill full panel height */
+.people-hero {
+  min-height: 100vh;
+}
+
+/* Video panels: fill full panel height, no top margin */
+.history-video-panel {
+  min-height: 100vh;
+  margin-top: 0;
+}
+
+.nature-branch-video-panel {
+  min-height: 100vh;
+  margin-top: 0;
+}
+
+/* History hero fills panel */
+.history-hero-screen {
+  min-height: 100vh;
 }

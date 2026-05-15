@@ -1,19 +1,27 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  AuthorsSection,
-  HistorySection,
+  AuthorsPanel,
+  HistoryCarouselPanel,
+  HistoryCollagePanel,
+  HistoryHeroPanel,
+  HistoryVideoPanel,
   IntroSection,
   LoadingScreen,
   MapHub,
   MemoryModal,
-  NatureSection,
+  NatureBranchVideoPanel,
+  NatureCarouselPanel,
+  NatureGalleryPanel,
+  NatureHeroPanel,
   OpeningSection,
-  PeopleSection,
-  PreIntroVideoSection,
+  PeopleGridPanel,
+  PeopleHeroPanel,
   PersonModal,
+  PreIntroVideoSection,
   StoryProgressBar,
 } from "./components";
 import { CHAPTERS, MEMORIES } from "./data";
+import { HISTORY_VIDEO_BLOCKS } from "./data/historyAssets";
 
 const INTRO_TEXT =
   "Ereymentau. A city of twelve thousand souls, sitting at the edge of the Kazakh steppe. Two granite hills rise above everything — that's where the name comes from. This is where we came with our cameras. This is what we found.";
@@ -24,6 +32,7 @@ const CHAPTER_SECTIONS = new Set([
   "chapter-nature",
   "chapter-authors",
 ]);
+
 const STORY_STEPS = [
   { id: "opening", label: "Opening" },
   { id: "map-hub", label: "Map" },
@@ -32,6 +41,27 @@ const STORY_STEPS = [
   { id: "chapter-nature", label: "Nature" },
   { id: "chapter-authors", label: "Authors" },
 ];
+
+const BASE_PANELS = [
+  { id: "opening",           storyStep: "opening"         },
+  { id: "intro",             storyStep: "intro"           },
+  { id: "map-hub",           storyStep: "map-hub"         },
+  { id: "history-hero",      storyStep: "chapter-history" },
+  { id: "history-collage",   storyStep: "chapter-history" },
+  { id: "history-carousel",  storyStep: "chapter-history" },
+  ...HISTORY_VIDEO_BLOCKS.map((_, i) => ({
+    id: `history-video-${i}`,
+    storyStep: "chapter-history",
+  })),
+  { id: "people-hero",       storyStep: "chapter-people"  },
+  { id: "people-grid",       storyStep: "chapter-people"  },
+  { id: "nature-hero",       storyStep: "chapter-nature"  },
+  { id: "nature-gallery",    storyStep: "chapter-nature"  },
+  { id: "nature-carousel",   storyStep: "chapter-nature"  },
+  { id: "nature-video",      storyStep: "chapter-nature"  },
+  { id: "authors",           storyStep: "chapter-authors" },
+];
+
 const MAP_DRAW_DURATION_MS = 3200;
 
 function createStars() {
@@ -64,7 +94,8 @@ function createMapPoints(chapters) {
 }
 
 export default function App() {
-  const [currentSection, setCurrentSection] = useState("pre-intro-video");
+  const [activePanelId, setActivePanelId] = useState("opening");
+  const [overlaySection, setOverlaySection] = useState("pre-intro-video");
   const [loadingTitle, setLoadingTitle] = useState("History");
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [typewriterText, setTypewriterText] = useState("");
@@ -77,6 +108,17 @@ export default function App() {
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") ?? "dark");
   const rafRef = useRef(0);
+  const trackRef = useRef(null);
+  const typewriterStarted = useRef(false);
+
+  const currentSection = overlaySection
+    ?? (BASE_PANELS.find((p) => p.id === activePanelId)?.storyStep ?? "opening");
+
+  const chapterVisible = CHAPTER_SECTIONS.has(currentSection);
+  const storyIndex = STORY_STEPS.findIndex((step) => step.id === currentSection);
+  const showStoryBar = !["intro", "loading", "pre-intro-video"].includes(currentSection);
+  const moonTransform = `translate(${parallax.x * 0.6}px, ${parallax.y * 0.6}px)`;
+  const mapTransform = `translate(${parallax.x * 0.3}px, ${parallax.y * 0.3}px)`;
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -87,11 +129,41 @@ export default function App() {
 
   const stars = useMemo(createStars, []);
   const mapPoints = useMemo(() => createMapPoints(CHAPTERS), []);
-  const chapterVisible = CHAPTER_SECTIONS.has(currentSection);
-  const storyIndex = STORY_STEPS.findIndex((step) => step.id === currentSection);
-  const showStoryBar = !["intro", "loading", "pre-intro-video"].includes(currentSection);
-  const moonTransform = `translate(${parallax.x * 0.6}px, ${parallax.y * 0.6}px)`;
-  const mapTransform = `translate(${parallax.x * 0.3}px, ${parallax.y * 0.3}px)`;
+
+  const scrollToPanel = useCallback((panelId) => {
+    const track = trackRef.current;
+    if (!track) return;
+    const target = track.querySelector(`[data-panel-id="${panelId}"]`);
+    if (target) target.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+  }, []);
+
+  // IntersectionObserver — tracks which panel is ≥50% visible
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+            const id = entry.target.dataset.panelId;
+            if (id) {
+              setActivePanelId(id);
+              // Auto-start typewriter when intro panel scrolls into view
+              if (id === "intro" && !typewriterStarted.current) {
+                typewriterStarted.current = true;
+                window.setTimeout(startTypewriter, 300);
+              }
+            }
+          }
+        }
+      },
+      { root: track, threshold: 0.5 },
+    );
+
+    track.querySelectorAll("[data-panel-id]").forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const onMouseMove = (event) => {
@@ -122,25 +194,23 @@ export default function App() {
       if (event.key === "Escape") {
         setPersonModal(null);
         setMemoryModal(null);
-        if (chapterVisible) setCurrentSection("map-hub");
+        if (chapterVisible) scrollToPanel("map-hub");
       }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [chapterVisible]);
+  }, [chapterVisible, scrollToPanel]);
 
   useEffect(() => {
     if (currentSection !== "map-hub") {
       setMapHubPhase("idle");
       return;
     }
-
     setMapHubPhase("drawing");
     setMapDrawRun((prev) => prev + 1);
     const timer = window.setTimeout(() => {
       setMapHubPhase("points");
     }, MAP_DRAW_DURATION_MS + 140);
-
     return () => window.clearTimeout(timer);
   }, [currentSection]);
 
@@ -159,16 +229,16 @@ export default function App() {
   };
 
   const goToOpening = () => {
-    setCurrentSection("opening");
-  };
-
-  const startIntro = () => {
-    setCurrentSection("intro");
-    window.setTimeout(startTypewriter, 400);
+    setOverlaySection(null);
+    scrollToPanel("opening");
   };
 
   const openIntro = () => {
-    startIntro();
+    scrollToPanel("intro");
+    if (!typewriterStarted.current) {
+      typewriterStarted.current = true;
+      window.setTimeout(startTypewriter, 400);
+    }
   };
 
   const loadChapter = (chapter) => {
@@ -180,7 +250,7 @@ export default function App() {
     };
     setLoadingTitle(labels[chapter] || chapter);
     setLoadingProgress(0);
-    setCurrentSection("loading");
+    setOverlaySection("loading");
 
     const started = Date.now();
     const duration = 1800;
@@ -192,9 +262,10 @@ export default function App() {
     }, 30);
 
     window.setTimeout(() => {
-      setCurrentSection(`chapter-${chapter}`);
+      setOverlaySection(null);
       window.clearInterval(progressTimer);
       setLoadingProgress(100);
+      scrollToPanel(`${chapter}-hero`);
     }, 2200);
   };
 
@@ -209,7 +280,7 @@ export default function App() {
       loadChapter(chapter);
       return;
     }
-    setCurrentSection(stepId);
+    scrollToPanel(stepId);
   };
 
   const goToStoryOffset = (offset) => {
@@ -233,7 +304,7 @@ export default function App() {
 
       <button
         className={`back-btn${chapterVisible ? " visible" : ""}`}
-        onClick={() => setCurrentSection("map-hub")}
+        onClick={() => scrollToPanel("map-hub")}
       >
         <span className="back-arrow" />
         <span>Map</span>
@@ -245,44 +316,98 @@ export default function App() {
         ✦ memory
       </button>
 
+      {/* Fixed overlays */}
       <LoadingScreen
-        active={currentSection === "loading"}
+        active={overlaySection === "loading"}
         chapterTitle={loadingTitle}
         progress={loadingProgress}
       />
-      <OpeningSection
-        active={currentSection === "opening"}
-        stars={stars}
-        onEnter={openIntro}
-        moonTransform={moonTransform}
-        theme={theme}
-        onThemeToggle={toggleTheme}
-      />
-      <IntroSection
-        active={currentSection === "intro"}
-        typewriterText={typewriterText}
-        showContinue={showContinue}
-        onContinue={() => setCurrentSection("map-hub")}
-      />
       <PreIntroVideoSection
-        active={currentSection === "pre-intro-video"}
+        active={overlaySection === "pre-intro-video"}
         onFinish={goToOpening}
       />
-      <MapHub
-        active={currentSection === "map-hub"}
-        onLoadChapter={loadChapter}
-        mapTransform={mapTransform}
-        mapPoints={mapPoints}
-        mapHubPhase={mapHubPhase}
-        mapDrawRun={mapDrawRun}
-      />
-      <HistorySection active={currentSection === "chapter-history"} />
-      <PeopleSection
-        active={currentSection === "chapter-people"}
-        onOpenPerson={setPersonModal}
-      />
-      <NatureSection active={currentSection === "chapter-nature"} />
-      <AuthorsSection active={currentSection === "chapter-authors"} />
+
+      {/* Horizontal scroll track */}
+      <div ref={trackRef} className="h-scroll-track">
+        <div className="h-panel" data-panel-id="opening">
+          <OpeningSection
+            stars={stars}
+            onEnter={openIntro}
+            moonTransform={moonTransform}
+            theme={theme}
+            onThemeToggle={toggleTheme}
+            isVisible={overlaySection === null && activePanelId === "opening"}
+          />
+        </div>
+
+        <div className="h-panel h-panel--centered" data-panel-id="intro">
+          <IntroSection
+            typewriterText={typewriterText}
+            showContinue={showContinue}
+            onContinue={() => scrollToPanel("map-hub")}
+          />
+        </div>
+
+        <div className="h-panel" data-panel-id="map-hub">
+          <MapHub
+            onLoadChapter={loadChapter}
+            mapTransform={mapTransform}
+            mapPoints={mapPoints}
+            mapHubPhase={mapHubPhase}
+            mapDrawRun={mapDrawRun}
+          />
+        </div>
+
+        <div className="h-panel" data-panel-id="history-hero">
+          <HistoryHeroPanel />
+        </div>
+
+        <div className="h-panel h-panel--scrollable" data-panel-id="history-collage">
+          <HistoryCollagePanel isVisible={activePanelId === "history-collage"} />
+        </div>
+
+        <div className="h-panel h-panel--scrollable" data-panel-id="history-carousel">
+          <HistoryCarouselPanel />
+        </div>
+
+        {HISTORY_VIDEO_BLOCKS.map((block, i) => (
+          <div key={block.id} className="h-panel" data-panel-id={`history-video-${i}`}>
+            <HistoryVideoPanel
+              block={block}
+              isVisible={activePanelId === `history-video-${i}`}
+            />
+          </div>
+        ))}
+
+        <div className="h-panel" data-panel-id="people-hero">
+          <PeopleHeroPanel />
+        </div>
+
+        <div className="h-panel h-panel--scrollable" data-panel-id="people-grid">
+          <PeopleGridPanel onOpenPerson={setPersonModal} />
+        </div>
+
+        <div className="h-panel" data-panel-id="nature-hero">
+          <NatureHeroPanel isVisible={activePanelId === "nature-hero"} />
+        </div>
+
+        <div className="h-panel h-panel--scrollable" data-panel-id="nature-gallery">
+          <NatureGalleryPanel />
+        </div>
+
+        <div className="h-panel h-panel--scrollable" data-panel-id="nature-carousel">
+          <NatureCarouselPanel />
+        </div>
+
+        <div className="h-panel" data-panel-id="nature-video">
+          <NatureBranchVideoPanel isVisible={activePanelId === "nature-video"} />
+        </div>
+
+        <div className="h-panel h-panel--scrollable" data-panel-id="authors">
+          <AuthorsPanel />
+        </div>
+      </div>
+
       <StoryProgressBar
         visible={showStoryBar}
         steps={STORY_STEPS}

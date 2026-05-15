@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PEOPLE } from "./data";
 import {
   HISTORY_ARCHIVE_PHOTOS,
@@ -229,9 +229,9 @@ export function PreIntroVideoSection({ active, onFinish }) {
   );
 }
 
-export function OpeningSection({ active, stars, onEnter, moonTransform, theme, onThemeToggle }) {
+export function OpeningSection({ stars, onEnter, moonTransform, theme, onThemeToggle, isVisible }) {
   return (
-    <section className={`section opening${active ? " active" : ""}`}>
+    <section className={`opening${isVisible ? " opening--active" : ""}`}>
       <div className="night-sky">
         {stars.map((star) => (
           <div
@@ -314,7 +314,7 @@ export function OpeningSection({ active, stars, onEnter, moonTransform, theme, o
               className={`title-letter${letter === " " ? " title-letter-space" : ""}`}
               style={{ animationDelay: `${index * 0.085}s` }}
             >
-              {letter === " " ? "\u00A0" : letter}
+              {letter === " " ? " " : letter}
             </span>
           ))}
         </div>
@@ -327,14 +327,9 @@ export function OpeningSection({ active, stars, onEnter, moonTransform, theme, o
   );
 }
 
-export function IntroSection({
-  active,
-  typewriterText,
-  showContinue,
-  onContinue,
-}) {
+export function IntroSection({ typewriterText, showContinue, onContinue }) {
   return (
-    <section className={`section slide-up${active ? " active" : ""}`}>
+    <section className="slide-up">
       <div className="intro-inner">
         <div className="intro-label">Field notes · 2024</div>
         <div className="intro-heading">
@@ -355,7 +350,6 @@ export function IntroSection({
 }
 
 export function MapHub({
-  active,
   onLoadChapter,
   mapTransform,
   mapPoints,
@@ -366,7 +360,7 @@ export function MapHub({
   const showPoints = mapHubPhase === "points";
 
   return (
-    <section className={`section map-hub-section${active ? " active" : ""}`}>
+    <section className="map-hub-section">
       <div className="map-hub-inner">
         <header className="map-hub-heading" aria-label="Map title">
           <h1 className="map-sidebar-title">I Know a Spot</h1>
@@ -416,196 +410,126 @@ export function MapHub({
   );
 }
 
-export function HistorySection({ active }) {
-  const VISIBLE_SLIDES = 3;
-  /** 0 = collage cards fully spread, 1 = settled (driven by scroll through collage block) */
-  const [collageScrollProgress, setCollageScrollProgress] = useState(0);
-  const [carouselIndex, setCarouselIndex] = useState(0);
-  const [zoomedPhoto, setZoomedPhoto] = useState(null);
-  const historyVideoRefs = useRef([]);
-  const historySectionRef = useRef(null);
-  const collageSectionRef = useRef(null);
+// ─── History panels ───────────────────────────────────────────────────────────
 
-  const updateCollageScrollProgress = useCallback((sectionEl) => {
-    const collage = collageSectionRef.current;
-    if (!sectionEl || !collage) return;
+export function HistoryHeroPanel() {
+  return (
+    <div className="history-hero-screen">
+      <div
+        className="history-hero-photo-bg"
+        style={{ backgroundImage: `url(${HISTORY_HERO_BG})` }}
+        aria-hidden="true"
+      />
+      <div className="history-hero-year">1948</div>
+      <div className="history-hero-overlay">
+        <div className="chapter-eyebrow">Chapter I · Foundation</div>
+        <h2 className="history-hero-title">History of Ereymentau</h2>
+        <p className="history-hero-copy">
+          The city begins as a steppe settlement near trade routes and
+          defensive posts. Over two centuries, it grows from a frontier point
+          into a place where memory, landscape, and people stay tightly
+          connected.
+        </p>
+      </div>
+    </div>
+  );
+}
 
-    const { scrollTop, clientHeight } = sectionEl;
-    const sRect = sectionEl.getBoundingClientRect();
-    const cRect = collage.getBoundingClientRect();
-    const collageTopInContent = scrollTop + (cRect.top - sRect.top);
-    const collageH = collage.offsetHeight;
-
-    // Ramp 0→1 over a short scroll distance while the collage block moves through view
-    const RAMP_VH = 0.5;
-    const RAMP_FRACTION = 0.14; // full 0→1 over this fraction of collage height (smaller = snappier)
-    const rampStart = collageTopInContent - clientHeight * RAMP_VH;
-    const rampSpan = Math.max(collageH * RAMP_FRACTION, 88);
-
-    let p = (scrollTop - rampStart) / rampSpan;
-    p = Math.min(1, Math.max(0, p));
-    setCollageScrollProgress(p);
-  }, []);
-
-  useLayoutEffect(() => {
-    if (!active) {
-      setCollageScrollProgress(0);
-      return;
-    }
-    const id = requestAnimationFrame(() => {
-      if (historySectionRef.current) {
-        updateCollageScrollProgress(historySectionRef.current);
-      }
-    });
-    return () => cancelAnimationFrame(id);
-  }, [active, updateCollageScrollProgress]);
+export function HistoryCollagePanel({ isVisible }) {
+  const [settled, setSettled] = useState(false);
 
   useEffect(() => {
-    if (!active) {
-      setCollageScrollProgress(0);
-      setCarouselIndex(0);
-      setZoomedPhoto(null);
-      historyVideoRefs.current.forEach((node) => {
-        if (node) {
-          node.pause();
-          node.currentTime = 0;
-        }
-      });
+    if (!isVisible) {
+      setSettled(false);
       return;
     }
-    historyVideoRefs.current.forEach((node) => {
-      if (!node) return;
-      const play = () => node.play().catch(() => {});
-      if (node.readyState >= 2) play();
-      else node.addEventListener("loadeddata", play, { once: true });
-    });
-  }, [active]);
+    const timer = window.setTimeout(() => setSettled(true), 200);
+    return () => window.clearTimeout(timer);
+  }, [isVisible]);
+
+  return (
+    <div className="history-collage-section">
+      <h3 className="history-block-title">Scroll Collage</h3>
+      <p className="history-block-sub">
+        Archive stills drift and settle as you enter the chapter.
+      </p>
+      <div className="history-collage-grid">
+        {HISTORY_COLLAGE.map((item, index) => {
+          const direction = index % 2 === 0 ? -1 : 1;
+          const drift = settled ? 0 : 120 * direction;
+          const lift = settled ? 0 : 18;
+          return (
+            <article
+              key={item.id}
+              className="history-collage-card"
+              style={{
+                transform: `translate(${drift}px, ${lift}px)`,
+                opacity: settled ? 1 : 0.4,
+                transition: `transform 0.6s ease ${index * 0.05}s, opacity 0.6s ease ${index * 0.05}s`,
+              }}
+            >
+              <div className="history-collage-image">
+                <img src={item.src} alt="" loading="lazy" />
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export function HistoryCarouselPanel() {
+  const VISIBLE_SLIDES = 3;
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const [zoomedPhoto, setZoomedPhoto] = useState(null);
 
   const maxIndex = Math.max(HISTORY_ARCHIVE_PHOTOS.length - VISIBLE_SLIDES, 0);
   const visiblePhotos = HISTORY_ARCHIVE_PHOTOS.slice(
     carouselIndex,
     carouselIndex + VISIBLE_SLIDES,
   );
-  const onHistoryScroll = (event) => {
-    updateCollageScrollProgress(event.currentTarget);
-  };
 
   return (
-    <section
-      ref={historySectionRef}
-      className={`section chapter-section history-section${active ? " active" : ""}`}
-      onScroll={onHistoryScroll}
-    >
-      <div className="history-layout">
-        <div className="history-hero-screen">
-          <div
-            className="history-hero-photo-bg"
-            style={{ backgroundImage: `url(${HISTORY_HERO_BG})` }}
-            aria-hidden="true"
-          />
-          <div className="history-hero-year">1948</div>
-          <div className="history-hero-overlay">
-            <div className="chapter-eyebrow">Chapter I · Foundation</div>
-            <h2 className="history-hero-title">History of Ereymentau</h2>
-            <p className="history-hero-copy">
-              The city begins as a steppe settlement near trade routes and
-              defensive posts. Over two centuries, it grows from a frontier point
-              into a place where memory, landscape, and people stay tightly
-              connected.
-            </p>
-          </div>
+    <>
+      <div className="history-carousel-section">
+        <h3 className="history-block-title">Archive Carousel</h3>
+        <p className="history-block-sub">
+          Old town, residents, and album fragments. Click card to zoom.
+        </p>
+        <div className="history-carousel-controls">
+          <button
+            className="history-carousel-btn"
+            onClick={() => setCarouselIndex((prev) => Math.max(prev - 1, 0))}
+            disabled={carouselIndex === 0}
+            aria-label="Previous"
+          >
+            <ChevronIcon direction="left" />
+          </button>
+          <button
+            className="history-carousel-btn"
+            onClick={() =>
+              setCarouselIndex((prev) => Math.min(prev + 1, maxIndex))
+            }
+            disabled={carouselIndex >= maxIndex}
+            aria-label="Next"
+          >
+            <ChevronIcon direction="right" />
+          </button>
         </div>
-
-        <div className="history-collage-section" ref={collageSectionRef}>
-          <h3 className="history-block-title">Scroll Collage</h3>
-          <p className="history-block-sub">
-            Archive stills drift and settle as you scroll through the chapter.
-          </p>
-          <div className="history-collage-grid">
-            {HISTORY_COLLAGE.map((item, index) => {
-              const direction = index % 2 === 0 ? -1 : 1;
-              const drift = (1 - collageScrollProgress) * 120 * direction;
-              const lift = (1 - collageScrollProgress) * 18;
-              return (
-                <article
-                  key={item.id}
-                  className="history-collage-card"
-                  style={{
-                    transform: `translate(${drift}px, ${lift}px)`,
-                    opacity: 0.4 + collageScrollProgress * 0.6,
-                  }}
-                >
-                  <div className="history-collage-image">
-                    <img src={item.src} alt="" loading="lazy" />
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="history-carousel-section">
-          <h3 className="history-block-title">Archive Carousel</h3>
-          <p className="history-block-sub">
-            Old town, residents, and album fragments. Click card to zoom.
-          </p>
-          <div className="history-carousel-controls">
+        <div className="history-carousel-track">
+          {visiblePhotos.map((photo) => (
             <button
-              className="history-carousel-btn"
-              onClick={() => setCarouselIndex((prev) => Math.max(prev - 1, 0))}
-              disabled={carouselIndex === 0}
-              aria-label="Previous"
+              key={photo.id}
+              className="history-carousel-item"
+              onClick={() => setZoomedPhoto(photo)}
             >
-              <ChevronIcon direction="left" />
+              <div className="history-carousel-image">
+                <img src={photo.src} alt="" loading="lazy" />
+              </div>
             </button>
-            <button
-              className="history-carousel-btn"
-              onClick={() =>
-                setCarouselIndex((prev) => Math.min(prev + 1, maxIndex))
-              }
-              disabled={carouselIndex >= maxIndex}
-              aria-label="Next"
-            >
-              <ChevronIcon direction="right" />
-            </button>
-          </div>
-          <div className="history-carousel-track">
-            {visiblePhotos.map((photo) => (
-              <button
-                key={photo.id}
-                className="history-carousel-item"
-                onClick={() => setZoomedPhoto(photo)}
-              >
-                <div className="history-carousel-image">
-                  <img src={photo.src} alt="" loading="lazy" />
-                </div>
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
-
-        {HISTORY_VIDEO_BLOCKS.map((block, videoIndex) => (
-          <div key={block.id} className="history-video-section">
-            <div className="history-video-bg">
-              <video
-                ref={(el) => {
-                  historyVideoRefs.current[videoIndex] = el;
-                }}
-                className="history-video-fill"
-                src={block.src}
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="metadata"
-              />
-            </div>
-            <div className="history-video-overlay">
-              <h3>{block.title}</h3>
-              <p>{block.body}</p>
-            </div>
-          </div>
-        ))}
       </div>
 
       {zoomedPhoto && (
@@ -623,68 +547,148 @@ export function HistorySection({ active }) {
           </div>
         </div>
       )}
-    </section>
+    </>
   );
 }
 
-export function PeopleSection({ active, onOpenPerson }) {
+export function HistoryVideoPanel({ block, isVisible }) {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    const node = videoRef.current;
+    if (!node) return;
+    if (isVisible) {
+      const play = () => node.play().catch(() => {});
+      if (node.readyState >= 2) play();
+      else node.addEventListener("loadeddata", play, { once: true });
+    } else {
+      node.pause();
+      node.currentTime = 0;
+    }
+  }, [isVisible]);
+
   return (
-    <section className={`section chapter-section people-section${active ? " active" : ""}`}>
-      <div className="people-hero">
-        <div className="people-hero-bg-text">People</div>
-        <div className="people-hero-content">
-          <div className="chapter-eyebrow">Chapter II · People</div>
-          <h2 className="people-hero-title">Voices of Ereymentau</h2>
-          <p className="people-hero-copy">
-            The city reveals itself through those who live in it — through their
-            rhythms, routines, memories, and expectations.
-          </p>
-          <p className="people-hero-copy">
-            This chapter brings together voices that describe the same place in
-            different ways: formally, personally, and almost accidentally.
-          </p>
-        </div>
+    <div className="history-video-section history-video-panel">
+      <div className="history-video-bg">
+        <video
+          ref={videoRef}
+          className="history-video-fill"
+          src={block.src}
+          muted
+          loop
+          playsInline
+          preload="metadata"
+        />
       </div>
-      <div className="chapter-inner people-content">
-        <div className="chapter-eyebrow">Chapter II</div>
-        <h2 className="chapter-big-title">People</h2>
-        <p className="chapter-big-sub">Faces of a city · Interviews</p>
-        <div className="people-grid">
-          {PEOPLE.map((person) => (
-            <button
-              key={person.id}
-              className="person-card"
-              onClick={() => onOpenPerson(person)}
+      <div className="history-video-overlay">
+        <h3>{block.title}</h3>
+        <p>{block.body}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── People panels ────────────────────────────────────────────────────────────
+
+export function PeopleHeroPanel() {
+  return (
+    <div className="people-hero">
+      <div className="people-hero-bg-text">People</div>
+      <div className="people-hero-content">
+        <div className="chapter-eyebrow">Chapter II · People</div>
+        <h2 className="people-hero-title">Voices of Ereymentau</h2>
+        <p className="people-hero-copy">
+          The city reveals itself through those who live in it — through their
+          rhythms, routines, memories, and expectations.
+        </p>
+        <p className="people-hero-copy">
+          This chapter brings together voices that describe the same place in
+          different ways: formally, personally, and almost accidentally.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export function PeopleGridPanel({ onOpenPerson }) {
+  return (
+    <div className="chapter-inner people-content">
+      <div className="chapter-eyebrow">Chapter II</div>
+      <h2 className="chapter-big-title">People</h2>
+      <p className="chapter-big-sub">Faces of a city · Interviews</p>
+      <div className="people-grid">
+        {PEOPLE.map((person) => (
+          <button
+            key={person.id}
+            className="person-card"
+            onClick={() => onOpenPerson(person)}
+          >
+            <div
+              className={`person-portrait-frame portrait-tone-${person.portraitTone}`}
             >
               <div
-                className={`person-portrait-frame portrait-tone-${person.portraitTone}`}
-              >
-                <div
-                  className={`person-portrait${
-                    person.thumbnailSrc ? " person-portrait--thumb" : ""
-                  }`}
-                  style={
-                    person.thumbnailSrc
-                      ? { backgroundImage: `url(${person.thumbnailSrc})` }
-                      : undefined
-                  }
-                />
-                <div className="portrait-hover-label">Open interview</div>
-              </div>
-              <div className="person-name">{person.name}</div>
-              <div className="person-role">{person.role}</div>
-              {person.interviewNote ? (
-                <div className="person-interview-note">{person.interviewNote}</div>
-              ) : null}
-            </button>
-          ))}
-        </div>
+                className={`person-portrait${
+                  person.thumbnailSrc ? " person-portrait--thumb" : ""
+                }`}
+                style={
+                  person.thumbnailSrc
+                    ? { backgroundImage: `url(${person.thumbnailSrc})` }
+                    : undefined
+                }
+              />
+              <div className="portrait-hover-label">Open interview</div>
+            </div>
+            <div className="person-name">{person.name}</div>
+            <div className="person-role">{person.role}</div>
+            {person.interviewNote ? (
+              <div className="person-interview-note">{person.interviewNote}</div>
+            ) : null}
+          </button>
+        ))}
       </div>
-    </section>
+    </div>
   );
 }
 
-export function NatureSection({ active }) {
+// ─── Nature panels ────────────────────────────────────────────────────────────
+
+export function NatureHeroPanel({ isVisible }) {
+  const natureHeroVideoRef = useRef(null);
+
+  useEffect(() => {
+    const v = natureHeroVideoRef.current;
+    if (!v) return;
+    if (isVisible) v.play().catch(() => {});
+    else v.pause();
+  }, [isVisible]);
+
+  return (
+    <div className="nature-hero">
+      <div className="nature-hero-media">
+        <video
+          ref={natureHeroVideoRef}
+          className="nature-hero-video"
+          src={natureHeroVideo}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+        />
+        <div className="nature-hero-scrim" aria-hidden />
+      </div>
+      <div className="nature-hero-overlay">
+        <div className="chapter-eyebrow">Chapter III · Nature</div>
+        <h2 className="nature-hero-title">The Steppe Breathes</h2>
+        <p className="nature-hero-sub">
+          Wind, hills, and wind turbines shape the rhythm of the city and define how it is experienced.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export function NatureGalleryPanel() {
   const galleryItems = [
     { id: "g1", title: "Morning ridge", note: "wind over stone" },
     { id: "g2", title: "Steppe grass", note: "late summer tones" },
@@ -692,159 +696,26 @@ export function NatureSection({ active }) {
     { id: "g4", title: "Lake edge", note: "quiet water reflections" },
     { id: "g5", title: "Wide steppe panorama", note: "horizon without end", wide: true },
   ];
-
-  const scenicSlides = [
-    { id: "s1", title: "Granite hills", meta: "placeholder frame 01" },
-    { id: "s2", title: "Steppe valley", meta: "placeholder frame 02" },
-    { id: "s3", title: "Evening sky", meta: "placeholder frame 03" },
-    { id: "s4", title: "Dry grass texture", meta: "placeholder frame 04" },
-    { id: "s5", title: "Lake mirror", meta: "placeholder frame 05" },
-  ];
-
-  const natureStoneQuote =
-    "The land keeps speaking long after people stop talking.";
-
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [carouselIndex, setCarouselIndex] = useState(0);
   const [lightboxItem, setLightboxItem] = useState(null);
-  const natureHeroVideoRef = useRef(null);
-  const natureBranchVideoRef = useRef(null);
-
-  useEffect(() => {
-    if (!active) {
-      setScrollProgress(0);
-      setCarouselIndex(0);
-      setLightboxItem(null);
-    }
-  }, [active]);
-
-  useEffect(() => {
-    for (const ref of [natureHeroVideoRef, natureBranchVideoRef]) {
-      const v = ref.current;
-      if (!v) continue;
-      if (active) v.play().catch(() => {});
-      else v.pause();
-    }
-  }, [active]);
-
-  const onNatureScroll = (event) => {
-    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-    const maxScroll = Math.max(scrollHeight - clientHeight, 1);
-    setScrollProgress(Math.min(Math.max(scrollTop / maxScroll, 0), 1));
-  };
-
-  const currentSlide = scenicSlides[carouselIndex];
 
   return (
-    <section
-      className={`section chapter-section nature-section${active ? " active" : ""}`}
-      onScroll={onNatureScroll}
-    >
-      <div className="nature-layout">
-        <div className="nature-hero">
-          <div
-            className="nature-hero-media"
-            style={{ transform: `translateY(${scrollProgress * 48}px) scale(1.05)` }}
-          >
-            <video
-              ref={natureHeroVideoRef}
-              className="nature-hero-video"
-              src={natureHeroVideo}
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-            />
-            <div className="nature-hero-scrim" aria-hidden />
-          </div>
-          <div className="nature-hero-overlay">
-            <div className="chapter-eyebrow">Chapter III · Nature</div>
-            <h2 className="nature-hero-title">The Steppe Breathes</h2>
-            <p className="nature-hero-sub">
-              Wind, hills, and wind turbines shape the rhythm of the city and define how it is experienced.
-            </p>
-          </div>
-        </div>
-
-        <div className="nature-gallery-block">
-          <h3 className="nature-block-title">Landscape Gallery</h3>
-          <div className="nature-gallery-grid">
-            {galleryItems.map((item) => (
-              <button
-                key={item.id}
-                className={`nature-gallery-item${item.wide ? " nature-gallery-item-wide" : ""}`}
-                onClick={() => setLightboxItem(item)}
-              >
-                <div className="nature-gallery-photo">image placeholder</div>
-                <div className="nature-gallery-caption">
-                  <span className="nature-caption-title">{item.title}</span>
-                  <span className="nature-caption-hand">{item.note}</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="nature-branch-video">
-          <div className="nature-branch-video-bg">
-            <video
-              ref={natureBranchVideoRef}
-              className="nature-branch-video-fill"
-              src={natureBranchVideo}
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-            />
-            <div className="nature-branch-video-scrim" aria-hidden />
-          </div>
-          <div className="nature-branch-video-overlay">
-            <div className="nature-quote-inner">
-              <div className="nature-quote-line" />
-              <p className="nature-quote-text">{natureStoneQuote}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="nature-carousel-block">
-          <h3 className="nature-block-title">Nature Frames</h3>
-          <div className="nature-carousel-stage">
+    <>
+      <div className="nature-gallery-block">
+        <h3 className="nature-block-title">Landscape Gallery</h3>
+        <div className="nature-gallery-grid">
+          {galleryItems.map((item) => (
             <button
-              className="nature-carousel-btn"
-              onClick={() => setCarouselIndex((prev) => Math.max(prev - 1, 0))}
-              disabled={carouselIndex === 0}
-              aria-label="Previous"
+              key={item.id}
+              className={`nature-gallery-item${item.wide ? " nature-gallery-item-wide" : ""}`}
+              onClick={() => setLightboxItem(item)}
             >
-              <ChevronIcon direction="left" />
-            </button>
-            <button
-              className="nature-carousel-photo"
-              onClick={() => setLightboxItem(currentSlide)}
-            >
-              <div className="nature-carousel-image">photo placeholder</div>
-              <div className="nature-carousel-meta">
-                <strong>{currentSlide.title}</strong>
-                <span>{currentSlide.meta}</span>
+              <div className="nature-gallery-photo">image placeholder</div>
+              <div className="nature-gallery-caption">
+                <span className="nature-caption-title">{item.title}</span>
+                <span className="nature-caption-hand">{item.note}</span>
               </div>
             </button>
-            <button
-              className="nature-carousel-btn"
-              onClick={() =>
-                setCarouselIndex((prev) =>
-                  Math.min(prev + 1, scenicSlides.length - 1),
-                )
-              }
-              disabled={carouselIndex === scenicSlides.length - 1}
-              aria-label="Next"
-            >
-              <ChevronIcon direction="right" />
-            </button>
-          </div>
-          <div className="nature-carousel-indicator">
-            {carouselIndex + 1} / {scenicSlides.length}
-          </div>
+          ))}
         </div>
       </div>
 
@@ -865,11 +736,123 @@ export function NatureSection({ active }) {
           </div>
         </div>
       )}
-    </section>
+    </>
   );
 }
 
-export function AuthorsSection({ active }) {
+export function NatureCarouselPanel() {
+  const scenicSlides = [
+    { id: "s1", title: "Granite hills", meta: "placeholder frame 01" },
+    { id: "s2", title: "Steppe valley", meta: "placeholder frame 02" },
+    { id: "s3", title: "Evening sky", meta: "placeholder frame 03" },
+    { id: "s4", title: "Dry grass texture", meta: "placeholder frame 04" },
+    { id: "s5", title: "Lake mirror", meta: "placeholder frame 05" },
+  ];
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const [lightboxItem, setLightboxItem] = useState(null);
+  const currentSlide = scenicSlides[carouselIndex];
+
+  return (
+    <>
+      <div className="nature-carousel-block">
+        <h3 className="nature-block-title">Nature Frames</h3>
+        <div className="nature-carousel-stage">
+          <button
+            className="nature-carousel-btn"
+            onClick={() => setCarouselIndex((prev) => Math.max(prev - 1, 0))}
+            disabled={carouselIndex === 0}
+            aria-label="Previous"
+          >
+            <ChevronIcon direction="left" />
+          </button>
+          <button
+            className="nature-carousel-photo"
+            onClick={() => setLightboxItem(currentSlide)}
+          >
+            <div className="nature-carousel-image">photo placeholder</div>
+            <div className="nature-carousel-meta">
+              <strong>{currentSlide.title}</strong>
+              <span>{currentSlide.meta}</span>
+            </div>
+          </button>
+          <button
+            className="nature-carousel-btn"
+            onClick={() =>
+              setCarouselIndex((prev) =>
+                Math.min(prev + 1, scenicSlides.length - 1),
+              )
+            }
+            disabled={carouselIndex === scenicSlides.length - 1}
+            aria-label="Next"
+          >
+            <ChevronIcon direction="right" />
+          </button>
+        </div>
+        <div className="nature-carousel-indicator">
+          {carouselIndex + 1} / {scenicSlides.length}
+        </div>
+      </div>
+
+      {lightboxItem && (
+        <div className="overlay" onClick={() => setLightboxItem(null)}>
+          <div
+            className="modal-inner nature-lightbox"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button className="modal-close" onClick={() => setLightboxItem(null)}>
+              ✕ close
+            </button>
+            <div className="nature-lightbox-image">image placeholder</div>
+            <div className="nature-lightbox-meta">
+              <h4>{lightboxItem.title}</h4>
+              <p>{lightboxItem.note ?? lightboxItem.meta}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+export function NatureBranchVideoPanel({ isVisible }) {
+  const natureBranchVideoRef = useRef(null);
+  const natureStoneQuote = "The land keeps speaking long after people stop talking.";
+
+  useEffect(() => {
+    const v = natureBranchVideoRef.current;
+    if (!v) return;
+    if (isVisible) v.play().catch(() => {});
+    else v.pause();
+  }, [isVisible]);
+
+  return (
+    <div className="nature-branch-video nature-branch-video-panel">
+      <div className="nature-branch-video-bg">
+        <video
+          ref={natureBranchVideoRef}
+          className="nature-branch-video-fill"
+          src={natureBranchVideo}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+        />
+        <div className="nature-branch-video-scrim" aria-hidden />
+      </div>
+      <div className="nature-branch-video-overlay">
+        <div className="nature-quote-inner">
+          <div className="nature-quote-line" />
+          <p className="nature-quote-text">{natureStoneQuote}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Authors panel ────────────────────────────────────────────────────────────
+
+export function AuthorsPanel() {
   const diaryEntries = [
     {
       id: "d1",
@@ -905,12 +888,8 @@ export function AuthorsSection({ active }) {
 
   const [zoomedPhoto, setZoomedPhoto] = useState(null);
 
-  useEffect(() => {
-    if (!active) setZoomedPhoto(null);
-  }, [active]);
-
   return (
-    <section className={`section chapter-section authors-section${active ? " active" : ""}`}>
+    <>
       <div className="chapter-inner">
         <div className="chapter-eyebrow">Chapter IV · Authors</div>
         <h2 className="chapter-big-title">Backstage Diary</h2>
@@ -1006,9 +985,11 @@ export function AuthorsSection({ active }) {
           </div>
         </div>
       )}
-    </section>
+    </>
   );
 }
+
+// ─── Modals (unchanged) ───────────────────────────────────────────────────────
 
 export function PersonModal({ person, onClose }) {
   const videoRef = useRef(null);

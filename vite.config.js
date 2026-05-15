@@ -12,4 +12,12 @@ export default defineConfig({
   base,
   plugins: [react()],
   assetsInclude: ["**/*.JPG", "**/*.JPEG"],
+  server: {
+    port: 5011,
+    strictPort: true,
+  },
+  preview: {
+    port: 5011,
+    strictPort: true,
+  },
 });
