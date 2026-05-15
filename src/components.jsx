@@ -13,6 +13,20 @@ import natureBranchVideo from "./images/nature-tab/рандом ветка.mp4";
 
 const OPENING_TITLE = "I Know a Spot";
 
+function ChevronIcon({ direction }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <polyline
+        points={direction === "left" ? "10,3 5,8 10,13" : "6,3 11,8 6,13"}
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function LoadingScreen({ chapterTitle, active, progress }) {
   return (
     <section className={`section loading-screen-section${active ? " active" : ""}`}>
@@ -42,8 +56,9 @@ export function StoryProgressBar({
         className="story-nav-btn"
         onClick={onPrev}
         disabled={currentIndex <= 0}
+        aria-label="Previous"
       >
-        Previous
+        <ChevronIcon direction="left" />
       </button>
 
       <div className="story-progress-track">
@@ -68,8 +83,9 @@ export function StoryProgressBar({
         className="story-nav-btn"
         onClick={onNext}
         disabled={currentIndex >= steps.length - 1}
+        aria-label="Next"
       >
-        Next
+        <ChevronIcon direction="right" />
       </button>
     </div>
   );
@@ -213,7 +229,7 @@ export function PreIntroVideoSection({ active, onFinish }) {
   );
 }
 
-export function OpeningSection({ active, stars, onEnter, moonTransform }) {
+export function OpeningSection({ active, stars, onEnter, moonTransform, theme, onThemeToggle }) {
   return (
     <section className={`section opening${active ? " active" : ""}`}>
       <div className="night-sky">
@@ -231,7 +247,14 @@ export function OpeningSection({ active, stars, onEnter, moonTransform }) {
           />
         ))}
       </div>
-      <div className="moon" style={{ transform: moonTransform }} />
+      <div
+        className={`moon${theme === "light" ? " moon--sun" : ""}`}
+        style={{ transform: moonTransform }}
+        onClick={onThemeToggle}
+        role="button"
+        aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
+        title={theme === "light" ? "Switch to dark" : "Switch to light"}
+      />
       <div className="horizon" />
       <div className="opening-windmills" aria-hidden="true">
         <div className="windmill windmill-1">
@@ -531,8 +554,9 @@ export function HistorySection({ active }) {
               className="history-carousel-btn"
               onClick={() => setCarouselIndex((prev) => Math.max(prev - 1, 0))}
               disabled={carouselIndex === 0}
+              aria-label="Previous"
             >
-              ←
+              <ChevronIcon direction="left" />
             </button>
             <button
               className="history-carousel-btn"
@@ -540,8 +564,9 @@ export function HistorySection({ active }) {
                 setCarouselIndex((prev) => Math.min(prev + 1, maxIndex))
               }
               disabled={carouselIndex >= maxIndex}
+              aria-label="Next"
             >
-              →
+              <ChevronIcon direction="right" />
             </button>
           </div>
           <div className="history-carousel-track">
@@ -790,8 +815,9 @@ export function NatureSection({ active }) {
               className="nature-carousel-btn"
               onClick={() => setCarouselIndex((prev) => Math.max(prev - 1, 0))}
               disabled={carouselIndex === 0}
+              aria-label="Previous"
             >
-              Previous
+              <ChevronIcon direction="left" />
             </button>
             <button
               className="nature-carousel-photo"
@@ -811,8 +837,9 @@ export function NatureSection({ active }) {
                 )
               }
               disabled={carouselIndex === scenicSlides.length - 1}
+              aria-label="Next"
             >
-              Next
+              <ChevronIcon direction="right" />
             </button>
           </div>
           <div className="nature-carousel-indicator">

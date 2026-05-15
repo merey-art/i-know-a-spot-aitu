@@ -75,7 +75,15 @@ export default function App() {
   const [mapDrawRun, setMapDrawRun] = useState(0);
   const [cursor, setCursor] = useState({ x: 0, y: 0, rx: 0, ry: 0 });
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") ?? "dark");
   const rafRef = useRef(0);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
 
   const stars = useMemo(createStars, []);
   const mapPoints = useMemo(() => createMapPoints(CHAPTERS), []);
@@ -247,6 +255,8 @@ export default function App() {
         stars={stars}
         onEnter={openIntro}
         moonTransform={moonTransform}
+        theme={theme}
+        onThemeToggle={toggleTheme}
       />
       <IntroSection
         active={currentSection === "intro"}
