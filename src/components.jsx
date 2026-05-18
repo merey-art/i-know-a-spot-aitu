@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { PEOPLE } from "./data";
+import museumVideoSrc from "./assets/museum-shot.webm";
+import museumHotspotFlag from "./assets/museum-hotspot-flag.jpg";
+import museumHotspotFlagLeft from "./assets/museum-hotspot-flag-left.jpg";
 import {
   HISTORY_ARCHIVE_PHOTOS,
   HISTORY_COLLAGE,
@@ -14,15 +17,28 @@ import natureBranchVideo from "./images/nature-tab/рандом ветка.mp4";
 const OPENING_TITLE = "I Know a Spot";
 
 function ChevronIcon({ direction }) {
+  const isLeft = direction === "left";
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-      <polyline
-        points={direction === "left" ? "10,3 5,8 10,13" : "6,3 11,8 6,13"}
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+    <svg width="26" height="16" viewBox="0 0 44 28" fill="none" aria-hidden>
+      {isLeft ? (
+        <>
+          <path d="M 40,14 C 30,11.5 22,16.5 14,14 C 9,12.5 5.5,13.5 4,14"
+                stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M 4,14 C 5.5,11 8.5,7.5 11.5,6"
+                stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"/>
+          <path d="M 4,14 C 5.5,17 8.5,20.5 11.5,22"
+                stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"/>
+        </>
+      ) : (
+        <>
+          <path d="M 4,14 C 14,11.5 22,16.5 30,14 C 35,12.5 38.5,13.5 40,14"
+                stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M 40,14 C 38.5,11 35.5,7.5 32.5,6"
+                stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"/>
+          <path d="M 40,14 C 38.5,17 35.5,20.5 32.5,22"
+                stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"/>
+        </>
+      )}
     </svg>
   );
 }
@@ -105,6 +121,7 @@ export function PreIntroVideoSection({ active, onFinish }) {
   const isExitingRef = useRef(false);
   const lockTimeOpacityRef = useRef(false);
   const opacityRef = useRef(0);
+  const videoRef = useRef(null);
   const clearPostDarkenTimer = () => {
     if (postDarkenTimerRef.current) {
       window.clearTimeout(postDarkenTimerRef.current);
@@ -126,6 +143,7 @@ export function PreIntroVideoSection({ active, onFinish }) {
 
   useEffect(() => {
     if (!active) {
+      videoRef.current?.pause();
       isExitingRef.current = false;
       lockTimeOpacityRef.current = false;
       opacityRef.current = 0;
@@ -204,6 +222,7 @@ export function PreIntroVideoSection({ active, onFinish }) {
       }`}
     >
       <video
+        ref={videoRef}
         className="pre-intro-video"
         src={preIntroVideoSrc}
         autoPlay
@@ -585,6 +604,162 @@ export function HistoryVideoPanel({ block, isVisible }) {
         <p>{block.body}</p>
       </div>
     </div>
+  );
+}
+
+const MUSEUM_HOTSPOTS = [
+  {
+    id: "flag-left",
+    timeStart: 181,
+    timeEnd: 183,
+    x: 25,
+    y: 35,
+    title: "Воспоминания о войне",
+    body: "Флагшток у входа в музей поднимают в дни государственных праздников и в День памяти жертв Великой Отечественной войны. Многие семьи Ерейментау потеряли близких на фронте — их имена до сих пор произносят вслух, а флаг здесь не просто символ, а живая нить между поколениями.",
+    image: museumHotspotFlagLeft,
+  },
+  {
+    id: "flag-right",
+    timeStart: 181,
+    timeEnd: 183,
+    x: 72,
+    y: 35,
+    title: "Воспоминания о войне",
+    body: "Флагшток у входа в музей поднимают в дни государственных праздников и в День памяти жертв Великой Отечественной войны. Многие семьи Ерейментау потеряли близких на фронте — их имена до сих пор произносят вслух, а флаг здесь не просто символ, а живая нить между поколениями.",
+    image: museumHotspotFlag,
+  },
+];
+
+export function MuseumVideoSection() {
+  const videoRef = useRef(null);
+  const scrollRef = useRef(null);
+  const scrubRef = useRef({ lastTop: 0, lastTime: 0, pauseTimer: null });
+  const [progress, setProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [activeHotspot, setActiveHotspot] = useState(null);
+
+  useEffect(() => {
+    const scroll = scrollRef.current;
+    const video = videoRef.current;
+    if (!scroll || !video) return;
+
+    const s = scrubRef.current;
+
+    const hardSync = () => {
+      if (!video.duration) return;
+      const max = scroll.scrollHeight - scroll.clientHeight;
+      if (max > 0) video.currentTime = (scroll.scrollTop / max) * video.duration;
+    };
+
+    const onScroll = () => {
+      const now = performance.now();
+      const dt = now - s.lastTime;
+      const delta = scroll.scrollTop - s.lastTop;
+      const max = scroll.scrollHeight - scroll.clientHeight;
+      if (max <= 0) return;
+
+      const p = scroll.scrollTop / max;
+      setProgress(p);
+
+      if (delta > 0 && dt > 0 && dt < 100 && video.duration) {
+        const rate = (delta / max) * video.duration / (dt / 1000);
+        video.playbackRate = Math.min(Math.max(rate, 0.1), 8);
+        if (video.paused) video.play().catch(() => {});
+      } else if (delta < 0) {
+        video.pause();
+        hardSync();
+      }
+
+      s.lastTop = scroll.scrollTop;
+      s.lastTime = now;
+
+      clearTimeout(s.pauseTimer);
+      s.pauseTimer = window.setTimeout(() => {
+        video.pause();
+        hardSync();
+      }, 120);
+    };
+
+    const onTimeUpdate = () => setCurrentTime(video.currentTime);
+    const onMetadata = () => hardSync();
+
+    scroll.addEventListener("scroll", onScroll, { passive: true });
+    video.addEventListener("timeupdate", onTimeUpdate);
+    video.addEventListener("loadedmetadata", onMetadata);
+    return () => {
+      scroll.removeEventListener("scroll", onScroll);
+      video.removeEventListener("timeupdate", onTimeUpdate);
+      video.removeEventListener("loadedmetadata", onMetadata);
+      clearTimeout(s.pauseTimer);
+    };
+  }, []);
+
+  const visibleHotspots = MUSEUM_HOTSPOTS.filter(
+    (h) => currentTime >= h.timeStart && currentTime <= h.timeEnd,
+  );
+
+  const handleHotspotClick = (hotspot) => {
+    videoRef.current?.pause();
+    setActiveHotspot(hotspot);
+  };
+
+  const closeHotspot = () => setActiveHotspot(null);
+
+  return (
+    <>
+      <div ref={scrollRef} className="museum-scroll-container">
+        <div className="museum-video-content">
+          <div className="museum-video-sticky">
+            <video
+              ref={videoRef}
+              className="museum-video-fill"
+              src={museumVideoSrc}
+              muted
+              playsInline
+              preload="auto"
+            />
+
+            {visibleHotspots.map((h) => (
+              <button
+                key={h.id}
+                className="museum-hotspot"
+                style={{ left: `${h.x}%`, top: `${h.y}%` }}
+                onClick={() => handleHotspotClick(h)}
+                aria-label={h.title}
+              >
+                <span className="museum-hotspot-ring" />
+                <span className="museum-hotspot-dot" />
+              </button>
+            ))}
+
+            <div className="museum-scroll-hint" style={{ opacity: progress > 0.03 ? 0 : 1 }}>
+              <span>Scroll to explore</span>
+              <span className="museum-scroll-arrow">↓</span>
+            </div>
+            <div className="museum-progress-bar">
+              <div className="museum-progress-fill" style={{ width: `${progress * 100}%` }} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {activeHotspot && (
+        <div className="overlay" onClick={closeHotspot}>
+          <div className="modal-inner museum-hotspot-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={closeHotspot}>✕ close</button>
+            {activeHotspot.image && (
+              <div className="museum-hotspot-image">
+                <img src={activeHotspot.image} alt="" />
+              </div>
+            )}
+            <div className="museum-hotspot-meta">
+              <h3 className="museum-hotspot-title">{activeHotspot.title}</h3>
+              <p className="museum-hotspot-body">{activeHotspot.body}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

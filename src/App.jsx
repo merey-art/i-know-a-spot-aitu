@@ -9,6 +9,7 @@ import {
   LoadingScreen,
   MapHub,
   MemoryModal,
+  MuseumVideoSection,
   NatureBranchVideoPanel,
   NatureCarouselPanel,
   NatureGalleryPanel,
@@ -49,10 +50,9 @@ const BASE_PANELS = [
   { id: "history-hero",      storyStep: "chapter-history" },
   { id: "history-collage",   storyStep: "chapter-history" },
   { id: "history-carousel",  storyStep: "chapter-history" },
-  ...HISTORY_VIDEO_BLOCKS.map((_, i) => ({
-    id: `history-video-${i}`,
-    storyStep: "chapter-history",
-  })),
+  { id: "history-video-0",   storyStep: "chapter-history" },
+  { id: "museum-video",      storyStep: "chapter-history" },
+  { id: "history-video-1",   storyStep: "chapter-history" },
   { id: "people-hero",       storyStep: "chapter-people"  },
   { id: "people-grid",       storyStep: "chapter-people"  },
   { id: "nature-hero",       storyStep: "chapter-nature"  },
@@ -306,7 +306,14 @@ export default function App() {
         className={`back-btn${chapterVisible ? " visible" : ""}`}
         onClick={() => scrollToPanel("map-hub")}
       >
-        <span className="back-arrow" />
+        <svg className="back-arrow" width="20" height="13" viewBox="0 0 44 28" fill="none" aria-hidden>
+          <path d="M 40,14 C 30,11.5 22,16.5 14,14 C 9,12.5 5.5,13.5 4,14"
+                stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M 4,14 C 5.5,11 8.5,7.5 11.5,6"
+                stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
+          <path d="M 4,14 C 5.5,17 8.5,20.5 11.5,22"
+                stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
+        </svg>
         <span>Map</span>
       </button>
       <button
@@ -370,14 +377,23 @@ export default function App() {
           <HistoryCarouselPanel />
         </div>
 
-        {HISTORY_VIDEO_BLOCKS.map((block, i) => (
-          <div key={block.id} className="h-panel" data-panel-id={`history-video-${i}`}>
-            <HistoryVideoPanel
-              block={block}
-              isVisible={activePanelId === `history-video-${i}`}
-            />
-          </div>
-        ))}
+        <div className="h-panel" data-panel-id="history-video-0">
+          <HistoryVideoPanel
+            block={HISTORY_VIDEO_BLOCKS[0]}
+            isVisible={activePanelId === "history-video-0"}
+          />
+        </div>
+
+        <div className="h-panel" data-panel-id="museum-video">
+          <MuseumVideoSection />
+        </div>
+
+        <div className="h-panel" data-panel-id="history-video-1">
+          <HistoryVideoPanel
+            block={HISTORY_VIDEO_BLOCKS[1]}
+            isVisible={activePanelId === "history-video-1"}
+          />
+        </div>
 
         <div className="h-panel" data-panel-id="people-hero">
           <PeopleHeroPanel />
