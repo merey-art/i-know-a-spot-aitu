@@ -93,6 +93,7 @@ function createMapPoints(chapters) {
 
 export default function App() {
   const [activePanelId, setActivePanelId] = useState("opening");
+  const [isFading, setIsFading] = useState(false);
   const [typewriterText, setTypewriterText] = useState("");
   const [showContinue, setShowContinue] = useState(false);
   const [personModal, setPersonModal] = useState(null);
@@ -133,6 +134,16 @@ export default function App() {
     if (!track) return;
     const target = track.querySelector(`[data-panel-id="${panelId}"]`);
     if (target) target.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+  }, []);
+
+  const fadeToPanel = useCallback((panelId) => {
+    setIsFading(true);
+    setTimeout(() => {
+      const track = trackRef.current;
+      const target = track?.querySelector(`[data-panel-id="${panelId}"]`);
+      if (target) target.scrollIntoView({ behavior: "instant", inline: "start", block: "nearest" });
+      setTimeout(() => setIsFading(false), 80);
+    }, 220);
   }, []);
 
   // IntersectionObserver — tracks which panel is ≥50% visible
@@ -236,7 +247,7 @@ export default function App() {
 
   const loadChapter = (chapter) => {
     const firstPanel = BASE_PANELS.find((p) => p.storyStep === `chapter-${chapter}`);
-    if (firstPanel) scrollToPanel(firstPanel.id);
+    if (firstPanel) fadeToPanel(firstPanel.id);
   };
 
   const openMemory = () => {
@@ -250,7 +261,7 @@ export default function App() {
       loadChapter(chapter);
       return;
     }
-    scrollToPanel(stepId);
+    fadeToPanel(stepId);
   };
 
   const goToStoryOffset = (offset) => {
@@ -392,6 +403,7 @@ export default function App() {
 
       <PersonModal person={personModal} onClose={() => setPersonModal(null)} />
       <MemoryModal memory={memoryModal} onClose={() => setMemoryModal(null)} />
+      <div className={`chapter-fade${isFading ? " active" : ""}`} aria-hidden />
     </>
   );
 }

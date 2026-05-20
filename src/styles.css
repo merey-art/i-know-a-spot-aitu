@@ -5035,17 +5035,19 @@ html[data-paper="kraft"] .h-scroll-track {
   backdrop-filter: blur(6px);
   z-index: 200;
   display: flex; align-items: center; justify-content: center;
-  padding: 3rem;
+  padding: 1.5rem;
 }
 .modal-inner {
   background: var(--sb-paper-soft);
-  padding: 3.25rem;
-  max-width: 1196px;
+  padding: 2.5rem;
+  max-width: min(1008px, 90vw);
+  max-height: 92vh;
+  overflow-y: auto;
   width: 100%;
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2.6rem;
+  grid-template-columns: 1fr;
+  gap: 2rem;
   box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.6);
   transform: rotate(-0.4deg);
 }
@@ -5073,7 +5075,6 @@ html[data-paper="kraft"] .h-scroll-track {
 .modal-video-box {
   position: relative;
   inset: auto;
-  align-self: start;
   min-width: 0;
   background: var(--sb-polaroid);
   padding: 13px 13px 39px;
@@ -5090,13 +5091,15 @@ html[data-paper="kraft"] .h-scroll-track {
   filter: contrast(1.04) sepia(0.05);
 }
 .modal-person-copy {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem 2.5rem;
   min-width: 0;
   align-self: start;
 }
 .modal-person-transcript {
-  margin-top: auto;
+  grid-column: 1 / -1;
+  margin-top: 0;
   padding-top: 1.56rem;
   border-top: 1px solid rgba(154, 74, 42, 0.22);
 }
@@ -5259,3 +5262,18 @@ html[data-paper="kraft"] .h-scroll-track {
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: var(--sb-paper-dark); }
 ::-webkit-scrollbar-thumb { background: var(--sb-sepia); border-radius: 4px; }
+
+/* Chapter fade transition */
+.chapter-fade {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 350ms ease;
+}
+.chapter-fade.active {
+  opacity: 1;
+  transition: opacity 200ms ease;
+}

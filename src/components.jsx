@@ -257,10 +257,20 @@ const CHAPTER_NAV = [
 export function OpeningSection({ onEnter, onLoadChapter, isVisible }) {
   const videoRef = useRef(null);
   const [activated, setActivated] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
 
   useEffect(() => {
-    if (isVisible && !activated) setActivated(true);
-  }, [isVisible, activated]);
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.readyState >= 3) { setVideoReady(true); return; }
+    const onReady = () => setVideoReady(true);
+    v.addEventListener("canplay", onReady, { once: true });
+    return () => v.removeEventListener("canplay", onReady);
+  }, []);
+
+  useEffect(() => {
+    if (isVisible && videoReady && !activated) setActivated(true);
+  }, [isVisible, videoReady, activated]);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -851,6 +861,13 @@ export function MuseumVideoSection() {
   const [currentTime, setCurrentTime] = useState(0);
   const [activeHotspot, setActiveHotspot] = useState(null);
   const [hotspotImageIndex, setHotspotImageIndex] = useState(0);
+
+  useEffect(() => {
+    MUSEUM_HOTSPOTS.forEach((h) => {
+      const srcs = h.images ?? (h.image ? [h.image] : []);
+      srcs.forEach((src) => { const img = new Image(); img.src = src; });
+    });
+  }, []);
 
   useEffect(() => {
     const scroll = scrollRef.current;
@@ -1544,6 +1561,19 @@ export function AuthorsPanel() {
   const [animDir, setAnimDir] = useState("open");
   const [flap, setFlap] = useState(null);
   const [lightbox, setLightbox] = useState(null);
+
+  useEffect(() => {
+    const srcs = [];
+    DIARY_ENTRIES.forEach((e) => {
+      if (e.coverPhoto) srcs.push(e.coverPhoto);
+      e.pages.forEach((pg) => {
+        if (pg.images) srcs.push(...pg.images);
+        if (pg.imageSrc) srcs.push(pg.imageSrc);
+        if (pg.gallery) srcs.push(...pg.gallery);
+      });
+    });
+    srcs.forEach((src) => { const img = new Image(); img.src = src; });
+  }, []);
 
   const entry = DIARY_ENTRIES[activeIndex];
   const pages = entry.pages;
