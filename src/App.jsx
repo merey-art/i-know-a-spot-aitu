@@ -6,7 +6,6 @@ import {
   HistoryHeroPanel,
   HistoryVideoPanel,
   IntroSection,
-  LoadingScreen,
   MapHub,
   MemoryModal,
   MuseumVideoSection,
@@ -18,7 +17,6 @@ import {
   PeopleGridPanel,
   PeopleHeroPanel,
   PersonModal,
-  PreIntroVideoSection,
   StoryProgressBar,
 } from "./components";
 import { CHAPTERS, MEMORIES } from "./data";
@@ -95,9 +93,6 @@ function createMapPoints(chapters) {
 
 export default function App() {
   const [activePanelId, setActivePanelId] = useState("opening");
-  const [overlaySection, setOverlaySection] = useState("pre-intro-video");
-  const [loadingTitle, setLoadingTitle] = useState("History");
-  const [loadingProgress, setLoadingProgress] = useState(0);
   const [typewriterText, setTypewriterText] = useState("");
   const [showContinue, setShowContinue] = useState(false);
   const [personModal, setPersonModal] = useState(null);
@@ -111,12 +106,11 @@ export default function App() {
   const trackRef = useRef(null);
   const typewriterStarted = useRef(false);
 
-  const currentSection = overlaySection
-    ?? (BASE_PANELS.find((p) => p.id === activePanelId)?.storyStep ?? "opening");
+  const currentSection = BASE_PANELS.find((p) => p.id === activePanelId)?.storyStep ?? "opening";
 
   const chapterVisible = CHAPTER_SECTIONS.has(currentSection);
   const storyIndex = STORY_STEPS.findIndex((step) => step.id === currentSection);
-  const showStoryBar = !["intro", "loading", "pre-intro-video"].includes(currentSection);
+  const showStoryBar = !["opening", "intro", "pre-intro-video"].includes(currentSection);
   const moonTransform = `translate(${parallax.x * 0.6}px, ${parallax.y * 0.6}px)`;
   const mapTransform = `translate(${parallax.x * 0.3}px, ${parallax.y * 0.3}px)`;
 
@@ -124,6 +118,10 @@ export default function App() {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-nav-style", "cards");
+  }, []);
 
   const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
 
@@ -228,11 +226,6 @@ export default function App() {
     }, 28);
   };
 
-  const goToOpening = () => {
-    setOverlaySection(null);
-    scrollToPanel("opening");
-  };
-
   const openIntro = () => {
     scrollToPanel("intro");
     if (!typewriterStarted.current) {
@@ -242,31 +235,8 @@ export default function App() {
   };
 
   const loadChapter = (chapter) => {
-    const labels = {
-      history: "History",
-      people: "People",
-      nature: "Nature",
-      authors: "Authors",
-    };
-    setLoadingTitle(labels[chapter] || chapter);
-    setLoadingProgress(0);
-    setOverlaySection("loading");
-
-    const started = Date.now();
-    const duration = 1800;
-    const progressTimer = window.setInterval(() => {
-      const elapsed = Date.now() - started;
-      const value = Math.min(100, Math.round((elapsed / duration) * 100));
-      setLoadingProgress(value);
-      if (value >= 100) window.clearInterval(progressTimer);
-    }, 30);
-
-    window.setTimeout(() => {
-      setOverlaySection(null);
-      window.clearInterval(progressTimer);
-      setLoadingProgress(100);
-      scrollToPanel(`${chapter}-hero`);
-    }, 2200);
+    const firstPanel = BASE_PANELS.find((p) => p.storyStep === `chapter-${chapter}`);
+    if (firstPanel) scrollToPanel(firstPanel.id);
   };
 
   const openMemory = () => {
@@ -323,27 +293,13 @@ export default function App() {
         ✦ memory
       </button>
 
-      {/* Fixed overlays */}
-      <LoadingScreen
-        active={overlaySection === "loading"}
-        chapterTitle={loadingTitle}
-        progress={loadingProgress}
-      />
-      <PreIntroVideoSection
-        active={overlaySection === "pre-intro-video"}
-        onFinish={goToOpening}
-      />
-
       {/* Horizontal scroll track */}
       <div ref={trackRef} className="h-scroll-track">
         <div className="h-panel" data-panel-id="opening">
           <OpeningSection
-            stars={stars}
             onEnter={openIntro}
-            moonTransform={moonTransform}
-            theme={theme}
-            onThemeToggle={toggleTheme}
-            isVisible={overlaySection === null && activePanelId === "opening"}
+            onLoadChapter={loadChapter}
+            isVisible={activePanelId === "opening"}
           />
         </div>
 
@@ -352,6 +308,7 @@ export default function App() {
             typewriterText={typewriterText}
             showContinue={showContinue}
             onContinue={() => scrollToPanel("map-hub")}
+            isVisible={activePanelId === "intro"}
           />
         </div>
 
@@ -366,7 +323,7 @@ export default function App() {
         </div>
 
         <div className="h-panel" data-panel-id="history-hero">
-          <HistoryHeroPanel />
+          <HistoryHeroPanel isVisible={activePanelId === "history-hero"} />
         </div>
 
         <div className="h-panel h-panel--scrollable" data-panel-id="history-collage">
@@ -399,7 +356,7 @@ export default function App() {
           <PeopleHeroPanel />
         </div>
 
-        <div className="h-panel h-panel--scrollable" data-panel-id="people-grid">
+        <div className="h-panel" data-panel-id="people-grid">
           <PeopleGridPanel onOpenPerson={setPersonModal} />
         </div>
 

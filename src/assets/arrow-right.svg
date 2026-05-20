@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 28" fill="none">
+  <!-- body: slight S-curve from left to tip -->
+  <path d="M 4,14 C 14,11.5 22,16.5 30,14 C 35,12.5 38.5,13.5 40,14"
+        stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- upper arrowhead wing -->
+  <path d="M 40,14 C 38.5,11 35.5,7.5 32.5,6"
+        stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+  <!-- lower arrowhead wing -->
+  <path d="M 40,14 C 38.5,17 35.5,20.5 32.5,22"
+        stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+</svg>
