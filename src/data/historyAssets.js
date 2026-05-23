@@ -1,8 +1,8 @@
-import heroBg from "../images/history-tab/DSC04134.JPG";
+import heroBg from "../images/history-tab/DSC04134.webp";
 import collage1 from "../images/history-tab/SON02807.webp";
 import collage2 from "../images/history-tab/SON02822.webp";
 import collage3 from "../images/history-tab/SON02828.webp";
-import collage4 from "../images/history-tab/SON03077.jpg";
+import collage4 from "../images/history-tab/SON03077.webp";
 import videoMuseumExterior from "../images/history-tab/музей снаружи.mp4";
 import videoMuseumPlaque from "../images/history-tab/табличка музея.mp4";
 
@@ -33,13 +33,13 @@ export const HISTORY_VIDEO_BLOCKS = [
     src: videoMuseumExterior,
     title: "Past in motion",
     body:
-      "The museum from outside — a fixed point in the city where public memory is gathered, displayed, and argued over in quiet corridors.",
+      "The District Historical and Local Lore Museum. The museum was opened in 1991. It features several halls: a paleontological hall, an archaeological hall, an ethnographic hall, and a Hall of Glory dedicated to Kazakh batyrs. Separate exhibitions рассказывают о местной истории и природе — separate exhibitions present the local history and nature of the region. We also saw an exhibition display dedicated to the sacred sites of the district.",
   },
   {
     id: "v2",
     src: videoMuseumPlaque,
     title: "Words on the wall",
     body:
-      "A plaque, a name, a date: small objects that anchor a much larger story about who gets to write history on the street.",
+      "The museum building was constructed in 1948. It was the first building in the city of Ereymentau and also holds historical value, serving as a bridge between ancient and modern history.",
   },
 ];

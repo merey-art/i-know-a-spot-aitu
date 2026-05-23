@@ -1,20 +1,21 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { PEOPLE } from "./data";
-import museumVideoSrc from "./assets/museum-shot.webm";
-import museumHotspotFlag from "./assets/museum-hotspot-flag.jpg";
-import museumHotspotFlagLeft from "./assets/museum-hotspot-flag-left.jpg";
-import museumMap from "./assets/museum_map.JPG";
-import museumCity1 from "./assets/museum_city1.JPG";
-import museumCity2 from "./assets/museum_city2.JPG";
-import museumTitles from "./assets/museum_titles.JPG";
-import museumTitles1 from "./assets/museum_titles1.JPG";
-import museumWar from "./assets/museum_war.JPG";
-import museumWar1 from "./assets/museum_war1.JPG";
-import museumExpo from "./assets/museum_expo.JPG";
-import museumExpo1 from "./assets/museum_expo1.JPG";
-import museumExpo2 from "./assets/museum_expo2.JPG";
-import museumArt from "./assets/museum_art.JPG";
-import museumArt1 from "./assets/museum_art1.JPG";
+const museumVideoSrc = `${import.meta.env.BASE_URL}museum-shot.webm`;
+import museumHotspotFlag from "./assets/museum-hotspot-flag.webp";
+import museumHotspotFlagLeft from "./assets/museum-hotspot-flag-left.webp";
+import museumMap from "./assets/museum_map.webp";
+import museumCity1 from "./assets/museum_city1.webp";
+import museumCity2 from "./assets/museum_city2.webp";
+import museumTitles from "./assets/museum_titles.webp";
+import museumTitles1 from "./assets/museum_titles1.webp";
+import museumWar from "./assets/museum_war.webp";
+import museumWar1 from "./assets/museum_war1.webp";
+import museumExpo from "./assets/museum_expo.webp";
+import museumExpo1 from "./assets/museum_expo1.webp";
+import museumExpo2 from "./assets/museum_expo2.webp";
+import museumArt from "./assets/museum_art.webp";
+import museumArt1 from "./assets/museum_art1.webp";
 import {
   HISTORY_ARCHIVE_PHOTOS,
   HISTORY_COLLAGE,
@@ -22,8 +23,36 @@ import {
   HISTORY_VIDEO_BLOCKS,
 } from "./data/historyAssets";
 import preIntroVideoSrc from "../night scene shot (online-video-cutter.com).mp4";
-import natureHeroVideo from "./images/nature-tab/мельницы.mp4";
+import peopleHeroBg from "./images/IMG_4918.JPG";
 import natureBranchVideo from "./images/nature-tab/рандом ветка.mp4";
+import np01 from "./images/nature-tab/nature-photo/DSC00013.webp";
+import np02 from "./images/nature-tab/nature-photo/DSC00021.webp";
+import np03 from "./images/nature-tab/nature-photo/DSC00023.webp";
+import np04 from "./images/nature-tab/nature-photo/DSC00060.webp";
+import np05 from "./images/nature-tab/nature-photo/DSC00074.webp";
+import np06 from "./images/nature-tab/nature-photo/DSC00182.webp";
+import np07 from "./images/nature-tab/nature-photo/DSC00262.webp";
+import np08 from "./images/nature-tab/nature-photo/DSC00268.webp";
+import np09 from "./images/nature-tab/nature-photo/DSC00294.webp";
+import np10 from "./images/nature-tab/nature-photo/DSC09772.webp";
+import np11 from "./images/nature-tab/nature-photo/DSC09798.webp";
+import np12 from "./images/nature-tab/nature-photo/DSC09803.webp";
+import np13 from "./images/nature-tab/nature-photo/DSC09942.webp";
+import np14 from "./images/nature-tab/nature-photo/DSC09965.webp";
+import np15 from "./images/nature-tab/nature-photo/L1001036.webp";
+import np16 from "./images/nature-tab/nature-photo/L1001056.webp";
+import np17 from "./images/nature-tab/nature-photo/L1001073.webp";
+import np18 from "./images/nature-tab/nature-photo/L1001074.webp";
+import np19 from "./images/nature-tab/nature-photo/L1001075.webp";
+import np20 from "./images/nature-tab/nature-photo/L1001085.webp";
+import np21 from "./images/nature-tab/nature-photo/L1001094.webp";
+import { registerForUnmute, unregisterFromUnmute, playVoice } from "./sounds";
+
+const NATURE_CARDS = [
+  { id: "steppe",    label: "Steppe",    photos: [np01, np02, np03, np04, np05, np06, np07] },
+  { id: "landscape", label: "Landscape", photos: [np08, np09, np10, np11, np12, np13, np14] },
+  { id: "light",     label: "Light",     photos: [np15, np16, np17, np18, np19, np20, np21] },
+];
 
 const OPENING_TITLE = "I Know a Spot";
 
@@ -60,22 +89,11 @@ export function StoryProgressBar({
   steps,
   currentIndex,
   onSelectStep,
-  onPrev,
-  onNext,
 }) {
   if (!visible) return null;
 
   return (
     <div className="story-progress-bar" role="navigation" aria-label="Story navigation">
-      <button
-        className="story-nav-btn"
-        onClick={onPrev}
-        disabled={currentIndex <= 0}
-        aria-label="Previous"
-      >
-        <ChevronIcon direction="left" />
-      </button>
-
       <div className="story-progress-track">
         {steps.map((step, index) => {
           const isActive = index === currentIndex;
@@ -93,15 +111,6 @@ export function StoryProgressBar({
           );
         })}
       </div>
-
-      <button
-        className="story-nav-btn"
-        onClick={onNext}
-        disabled={currentIndex >= steps.length - 1}
-        aria-label="Next"
-      >
-        <ChevronIcon direction="right" />
-      </button>
     </div>
   );
 }
@@ -249,7 +258,7 @@ export function PreIntroVideoSection({ active, onFinish }) {
 
 const CHAPTER_NAV = [
   { num: "01", label: "History", ru: "История", key: "history" },
-  { num: "02", label: "People",  ru: "Лица",    key: "people"  },
+  { num: "02", label: "Life",    ru: "Жизнь",   key: "people"  },
   { num: "03", label: "Nature",  ru: "Природа", key: "nature"  },
   { num: "04", label: "Authors", ru: "Авторы",  key: "authors" },
 ];
@@ -312,7 +321,7 @@ export function OpeningSection({ onEnter, onLoadChapter, isVisible }) {
 
       <div className="frame-marks" aria-hidden>
         <span className="mark mark-tl">ER · 51.6°N / 73.1°E</span>
-        <span className="mark mark-tr">EREYMENTAU · 2025</span>
+        <span className="mark mark-tr">EREYMENTAU · 2026</span>
       </div>
 
       <div className="opening-title">
@@ -334,7 +343,7 @@ export function OpeningSection({ onEnter, onLoadChapter, isVisible }) {
           ))}
         </div>
 
-        <div className="title-sub">Ereymentau · Ерейментау · Documentary</div>
+        <div className="title-sub">Ereymentau · Interactive documentary</div>
 
         <button className="enter-btn" onClick={onEnter}>
           <span className="enter-btn-label">Begin</span>
@@ -356,24 +365,32 @@ export function OpeningSection({ onEnter, onLoadChapter, isVisible }) {
                 <span className="chapter-num">{c.num}</span>
                 <span className="chapter-label">
                   <span className="chapter-label-en">{c.label}</span>
-                  <span className="chapter-label-ru">{c.ru}</span>
                 </span>
                 <span className="chapter-tick" aria-hidden />
               </button>
             </li>
           ))}
         </ol>
-        <div className="chapter-nav-meta">
-          <span className="meta-dot" aria-hidden />
-          <span>scroll / tap a chapter to enter</span>
-        </div>
       </nav>
+
+      <div className="opening-scroll-hint" aria-hidden>
+        <span className="opening-scroll-arrow">→</span>
+        <span>Scroll horizontally to explore</span>
+      </div>
     </section>
   );
 }
 
 export function ShowreelPanel({ isVisible }) {
   const videoRef = useRef(null);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.volume = 0.5;
+    registerForUnmute(v);
+    return () => unregisterFromUnmute(v);
+  }, []);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -388,8 +405,8 @@ export function ShowreelPanel({ isVisible }) {
         ref={videoRef}
         className="showreel-bg"
         src={`${import.meta.env.BASE_URL}showreel.webm`}
-        muted
         loop
+        muted
         playsInline
         preload="auto"
         aria-hidden="true"
@@ -414,6 +431,14 @@ export function IntroSection({ typewriterText, showContinue, onContinue, isVisib
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
+    v.volume = 0.5;
+    registerForUnmute(v);
+    return () => unregisterFromUnmute(v);
+  }, []);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
     if (isVisible) v.play().catch(() => {});
     else v.pause();
   }, [isVisible]);
@@ -424,15 +449,15 @@ export function IntroSection({ typewriterText, showContinue, onContinue, isVisib
         ref={videoRef}
         className="intro-bg-video"
         src={`${import.meta.env.BASE_URL}showreel.webm`}
-        muted
         loop
+        muted
         playsInline
         preload="auto"
         aria-hidden="true"
       />
       <div className="intro-bg-scrim" aria-hidden />
       <div className="intro-inner">
-        <div className="intro-label">Field notes · 2024</div>
+        <div className="intro-label">Field notes · 2026</div>
         <div className="intro-heading">
           A city at the edge
           <br />
@@ -512,9 +537,17 @@ export function MapHub({
   mapPoints,
   mapHubPhase,
   mapDrawRun,
+  isVisible,
 }) {
   const showMap = mapHubPhase === "drawing" || mapHubPhase === "points";
   const showPoints = mapHubPhase === "points";
+
+  const audioRef = useRef(null);
+  useEffect(() => {
+    if (!isVisible) return;
+    audioRef.current = playVoice(`${import.meta.env.BASE_URL}audio/АУДИО МАТЕРИАЛЫ/AlimaVoice/AlimaAudio_YouKnowSpotToo.mp3`);
+    return () => { if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; audioRef.current = null; } };
+  }, [isVisible]);
 
   return (
     <section className="map-hub-section">
@@ -522,6 +555,7 @@ export function MapHub({
         <header className="map-hub-heading" aria-label="Map title">
           <h1 className="map-sidebar-title">I Know a Spot</h1>
           <p className="map-sidebar-sub">Ereymentau, Kazakhstan</p>
+          <p className="map-hint">tap a spot on the map<br/>or a chapter in the navigation ↓</p>
         </header>
         <div
           className={`map-container${showMap ? " map-container-visible" : ""}`}
@@ -601,6 +635,7 @@ export function HistoryHeroPanel({ isVisible }) {
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
+    v.volume = 0.2;
     if (isVisible) v.play().catch(() => {});
     else v.pause();
   }, [isVisible]);
@@ -611,7 +646,6 @@ export function HistoryHeroPanel({ isVisible }) {
         ref={videoRef}
         className="history-hero-bg-video"
         src={`${import.meta.env.BASE_URL}showreel-museum.webm`}
-        muted
         loop
         playsInline
         preload="auto"
@@ -676,10 +710,17 @@ export function HistoryCollagePanel({ isVisible }) {
   );
 }
 
-export function HistoryCarouselPanel() {
+export function HistoryCarouselPanel({ isVisible }) {
   const VISIBLE_SLIDES = 3;
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [zoomedPhoto, setZoomedPhoto] = useState(null);
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    if (!isVisible) return;
+    audioRef.current = playVoice(`${import.meta.env.BASE_URL}audio/АУДИО МАТЕРИАЛЫ/AlimaVoice/AlimaAudio_SeenAgain.mp3`);
+    return () => { if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; audioRef.current = null; } };
+  }, [isVisible]);
 
   const maxIndex = Math.max(HISTORY_ARCHIVE_PHOTOS.length - VISIBLE_SLIDES, 0);
   const visiblePhotos = HISTORY_ARCHIVE_PHOTOS.slice(
@@ -750,6 +791,7 @@ export function HistoryCarouselPanel() {
 
 export function HistoryVideoPanel({ block, isVisible }) {
   const videoRef = useRef(null);
+  const audioRef = useRef(null);
 
   useEffect(() => {
     const node = videoRef.current;
@@ -763,6 +805,12 @@ export function HistoryVideoPanel({ block, isVisible }) {
       node.currentTime = 0;
     }
   }, [isVisible]);
+
+  useEffect(() => {
+    if (block.title !== "Words on the wall" || !isVisible) return;
+    audioRef.current = playVoice(`${import.meta.env.BASE_URL}audio/АУДИО МАТЕРИАЛЫ/AlimaVoice/AlimaAudio_FirstBuilding.mp3`);
+    return () => { if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; audioRef.current = null; } };
+  }, [isVisible, block.title]);
 
   return (
     <div className="history-video-section history-video-panel">
@@ -801,6 +849,7 @@ const MUSEUM_HOTSPOTS = [
     x: 50,
     y: 50,
     images: [museumCity1, museumCity2],
+    body: "Sacred places of Ereymentau include the Bogenbai Batyr stele, the Bogenbai Batyr Historical and Local Lore Museum, the burial sites of Olzhabay Batyr and Umbetey Zhyrau, the mausoleums of Sakkulak Bi and Edige Bi, the equestrian statue of Bogenbai Batyr, and the “Kosbatyr” memorial-temple complex.",
   },
   {
     id: "museum-titles",
@@ -809,6 +858,7 @@ const MUSEUM_HOTSPOTS = [
     x: 50,
     y: 50,
     images: [museumTitles, museumTitles1],
+    body: "Sports awards and achievements of athletes from Ereymentau.",
   },
   {
     id: "museum-war",
@@ -817,6 +867,7 @@ const MUSEUM_HOTSPOTS = [
     x: 50,
     y: 50,
     images: [museumWar, museumWar1],
+    body: "Personal archives of war veterans.",
   },
   {
     id: "museum-expo",
@@ -852,7 +903,7 @@ const MUSEUM_HOTSPOTS = [
   },
 ];
 
-export function MuseumVideoSection() {
+export function MuseumVideoSection({ isVisible }) {
   const videoRef = useRef(null);
   const scrollRef = useRef(null);
   const rafRef = useRef(null);
@@ -861,6 +912,15 @@ export function MuseumVideoSection() {
   const [currentTime, setCurrentTime] = useState(0);
   const [activeHotspot, setActiveHotspot] = useState(null);
   const [hotspotImageIndex, setHotspotImageIndex] = useState(0);
+  const [showHotspotHint, setShowHotspotHint] = useState(false);
+  const hotspotHintSeenRef = useRef(false);
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    if (!isVisible) return;
+    audioRef.current = playVoice(`${import.meta.env.BASE_URL}audio/АУДИО МАТЕРИАЛЫ/AiganymVoice/AiganymAudio_Collected.mp3`);
+    return () => { if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; audioRef.current = null; } };
+  }, [isVisible]);
 
   useEffect(() => {
     MUSEUM_HOTSPOTS.forEach((h) => {
@@ -928,10 +988,27 @@ export function MuseumVideoSection() {
     (h) => currentTime >= h.timeStart && currentTime <= h.timeEnd,
   );
 
+  useEffect(() => {
+    if (visibleHotspots.length > 0 && !hotspotHintSeenRef.current) {
+      hotspotHintSeenRef.current = true;
+      setShowHotspotHint(true);
+      setTimeout(() => setShowHotspotHint(false), 3000);
+    }
+  }, [visibleHotspots.length]);
+
   const handleHotspotClick = (hotspot) => {
     videoRef.current?.pause();
     setHotspotImageIndex(0);
     setActiveHotspot(hotspot);
+    if (hotspot.id === "museum-titles") {
+      playVoice(`${import.meta.env.BASE_URL}audio/АУДИО МАТЕРИАЛЫ/AiganymVoice/AiganymAudio_PeopleProudOf.mp3`);
+    }
+    if (hotspot.id === "museum-war") {
+      playVoice(`${import.meta.env.BASE_URL}audio/АУДИО МАТЕРИАЛЫ/AiganymVoice/AiganymAudio_DontDistant.mp3`);
+    }
+    if (hotspot.id === "museum-city") {
+      playVoice(`${import.meta.env.BASE_URL}audio/АУДИО МАТЕРИАЛЫ/AiganymVoice/AiganymAudio_ThingsStillMatter.mp3`);
+    }
   };
 
   const closeHotspot = () => setActiveHotspot(null);
@@ -964,9 +1041,24 @@ export function MuseumVideoSection() {
             ))}
 
             <div className="museum-scroll-hint" style={{ opacity: progress > 0.03 ? 0 : 1 }}>
-              <span>Scroll to explore</span>
               <span className="museum-scroll-arrow">↓</span>
+              <span>Scroll to explore</span>
             </div>
+
+            <div className={`museum-hotspot-hint${showHotspotHint ? " visible" : ""}`}>
+              <span className="museum-hotspot-hint-dot" />
+              <span>Tap the markers to explore</span>
+            </div>
+
+            <button
+              className={`museum-restart-btn${progress > 0.95 ? " visible" : ""}`}
+              onClick={() => {
+                hotspotHintSeenRef.current = false;
+                scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              ↑ Watch again
+            </button>
             <div className="museum-progress-bar">
               <div className="museum-progress-fill" style={{ width: `${progress * 100}%` }} />
             </div>
@@ -974,7 +1066,7 @@ export function MuseumVideoSection() {
         </div>
       </div>
 
-      {activeHotspot && (
+      {activeHotspot && createPortal(
         <div className="overlay" onClick={closeHotspot}>
           <div className="modal-inner museum-hotspot-modal" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={closeHotspot}>✕ close</button>
@@ -1012,7 +1104,8 @@ export function MuseumVideoSection() {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
@@ -1023,9 +1116,10 @@ export function MuseumVideoSection() {
 export function PeopleHeroPanel() {
   return (
     <div className="people-hero">
-      <div className="people-hero-bg-text">People</div>
+      <div className="people-hero-bg-img" style={{ backgroundImage: `url(${peopleHeroBg})` }} aria-hidden />
+      <div className="people-hero-bg-text">Life</div>
       <div className="people-hero-content">
-        <div className="chapter-eyebrow">Chapter II · People</div>
+        <div className="chapter-eyebrow">Chapter II · Life</div>
         <h2 className="people-hero-title">Voices of Ereymentau</h2>
         <p className="people-hero-copy">
           The city reveals itself through those who live in it — through their
@@ -1040,41 +1134,66 @@ export function PeopleHeroPanel() {
   );
 }
 
-export function PeopleGridPanel({ onOpenPerson }) {
+export function PeopleGridPanel({ onOpenPerson, isVisible }) {
+  const [index, setIndex] = useState(1); // Akim starts in center
+
   return (
     <div className="chapter-inner people-content">
       <div className="chapter-eyebrow">Chapter II</div>
       <h2 className="chapter-big-title">People</h2>
       <p className="chapter-big-sub">Faces of a city · Interviews</p>
-      <div className="people-grid">
-        {PEOPLE.map((person) => (
-          <button
-            key={person.id}
-            className="person-card"
-            onClick={() => onOpenPerson(person)}
-          >
+
+      <div className="people-stage">
+        {PEOPLE.map((person, i) => {
+          const offset = i - index;
+          const clampedOffset = Math.max(-2, Math.min(2, offset));
+          return (
             <div
-              className={`person-portrait-frame portrait-tone-${person.portraitTone}`}
+              key={person.id}
+              className="person-card-slide"
+              data-offset={String(clampedOffset)}
+              style={{ zIndex: offset === 0 ? 3 : Math.max(1, 2 - Math.abs(offset)) }}
             >
-              <div
-                className={`person-portrait${
-                  person.thumbnailSrc ? " person-portrait--thumb" : ""
-                }`}
-                style={
-                  person.thumbnailSrc
-                    ? { backgroundImage: `url(${person.thumbnailSrc})` }
-                    : undefined
-                }
-              />
-              <div className="portrait-hover-label">Open interview</div>
+              <button
+                className="person-card"
+                onClick={() => offset === 0 ? onOpenPerson(person) : setIndex(i)}
+                tabIndex={offset === 0 ? 0 : -1}
+              >
+                <div className={`person-portrait-frame portrait-tone-${person.portraitTone}`}>
+                  <div
+                    className={`person-portrait${person.thumbnailSrc ? " person-portrait--thumb" : ""}`}
+                    style={person.thumbnailSrc ? { backgroundImage: `url(${person.thumbnailSrc})` } : undefined}
+                  />
+                  <div className="portrait-hover-label">Open interview</div>
+                </div>
+                <div className="person-name">{person.name}</div>
+                <div className="person-role">{person.role}</div>
+                {person.interviewNote && (
+                  <div className="person-interview-note">{person.interviewNote}</div>
+                )}
+              </button>
             </div>
-            <div className="person-name">{person.name}</div>
-            <div className="person-role">{person.role}</div>
-            {person.interviewNote ? (
-              <div className="person-interview-note">{person.interviewNote}</div>
-            ) : null}
-          </button>
-        ))}
+          );
+        })}
+      </div>
+
+      <div className={`people-nav-stickers${isVisible ? " people-nav-stickers--visible" : ""}`}>
+        <button
+          className="people-sticker-btn people-sticker-btn--prev"
+          onClick={() => setIndex((i) => Math.max(i - 1, 0))}
+          disabled={index === 0}
+          aria-label="Previous"
+        >
+          <ChevronIcon direction="left" />
+        </button>
+        <button
+          className="people-sticker-btn people-sticker-btn--next"
+          onClick={() => setIndex((i) => Math.min(i + 1, PEOPLE.length - 1))}
+          disabled={index === PEOPLE.length - 1}
+          aria-label="Next"
+        >
+          <ChevronIcon direction="right" />
+        </button>
       </div>
     </div>
   );
@@ -1196,17 +1315,17 @@ function VhsPlayer({ item, onClose }) {
           );
         })}
         <div className="vhs-collage-item vhs-collage-clipping" style={{ top: "44%", left: "2%", transform: "rotate(-3deg)" }}>
-          <h5>Steppe winds · 1979</h5>
-          <p>The granite ridge above the city catches wind from the north all year. Older residents claim they can tell the season from how it sounds at midnight.</p>
+          <h5>Wind turbines</h5>
+          <p>Strong winds are constantly present in Ereymentau, which is one of the reasons why wind power stations were installed here.</p>
         </div>
         <div className="vhs-collage-item vhs-collage-clipping" style={{ top: "40%", right: "2%", transform: "rotate(2.5deg)" }}>
-          <h5>Lake report · spring</h5>
-          <p>The shallow lakes south of Ereymentau hold water through August. Fishermen describe the surface as "mirror with a small noise underneath."</p>
+          <h5>Temirbulaq</h5>
+          <p>Just 1 km from the city, there is a natural spring where local residents collect free drinking water.</p>
         </div>
         <div className="vhs-collage-item vhs-collage-marker" style={{ top: "2%",  left: "32%", transform: "rotate(-4deg)" }}>EREYMENTAU</div>
         <div className="vhs-collage-item vhs-collage-marker vhs-collage-marker--blue vhs-collage-marker--small" style={{ top: "4%", left: "62%", transform: "rotate(3deg)" }}>steppe wind</div>
         <div className="vhs-collage-item vhs-collage-marker vhs-collage-marker--small" style={{ bottom: "4%", left: "30%", transform: "rotate(-2deg)" }}>field tapes</div>
-        <div className="vhs-collage-item vhs-collage-marker vhs-collage-marker--blue" style={{ bottom: "2%", right: "26%", transform: "rotate(2deg)" }}>1979 · 2024</div>
+        <div className="vhs-collage-item vhs-collage-marker vhs-collage-marker--blue" style={{ bottom: "2%", right: "26%", transform: "rotate(2deg)" }}>1979 · 2026</div>
         <div className="vhs-collage-item vhs-collage-sticky" style={{ top: "32%", left: "20%", transform: "rotate(-5deg)" }}>
           remember to dub<br/>side B before<br/>handing it back
         </div>
@@ -1257,9 +1376,12 @@ function VhsPlayer({ item, onClose }) {
   );
 }
 
-export function NatureGalleryPanel() {
+export function NatureGalleryPanel({ onVhsOpen }) {
   const [vhsItem, setVhsItem] = useState(null);
   const [page, setPage] = useState(0);
+
+  const openVhs = (item) => { setVhsItem(item); onVhsOpen?.(true); };
+  const closeVhs = () => { setVhsItem(null); onVhsOpen?.(false); };
   const PER_PAGE = 6;
   const pages = Math.ceil(VHS_ITEMS.length / PER_PAGE);
   const items = VHS_ITEMS.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
@@ -1273,7 +1395,8 @@ export function NatureGalleryPanel() {
           <button
             className="vhs-paper-nav"
             onClick={() => setPage((p) => Math.max(0, p - 1))}
-            disabled={page === 0}
+            disabled={page === 0 || !!vhsItem}
+            style={vhsItem ? { opacity: 0.25, pointerEvents: "none" } : undefined}
             aria-label="Previous page"
           >
             <span className="vhs-paper-nav-arrow">←</span>
@@ -1284,7 +1407,12 @@ export function NatureGalleryPanel() {
               <button
                 key={item.id}
                 className={`vhs-preview${item.glitch ? " is-glitch" : ""}`}
-                onClick={() => setVhsItem(item)}
+                onClick={() => {
+                  openVhs(item);
+                  if (item.title === "gathering water") {
+                    playVoice(`${import.meta.env.BASE_URL}audio/АУДИО МАТЕРИАЛЫ/AlinaVoice/AlinaAudition_GreatWater.mp3`);
+                  }
+                }}
                 aria-label={`Open ${item.title}`}
               >
                 {item.tag && <span className="vhs-preview-sticker">{item.tag}</span>}
@@ -1303,7 +1431,8 @@ export function NatureGalleryPanel() {
           <button
             className="vhs-paper-nav"
             onClick={() => setPage((p) => Math.min(pages - 1, p + 1))}
-            disabled={page >= pages - 1}
+            disabled={page >= pages - 1 || !!vhsItem}
+            style={vhsItem ? { opacity: 0.25, pointerEvents: "none" } : undefined}
             aria-label="Next page"
           >
             <span className="vhs-paper-nav-arrow">→</span>
@@ -1311,78 +1440,86 @@ export function NatureGalleryPanel() {
           </button>
         </div>
       </div>
-      {vhsItem && <VhsPlayer item={vhsItem} onClose={() => setVhsItem(null)} />}
+      {vhsItem && <VhsPlayer item={vhsItem} onClose={closeVhs} />}
     </>
   );
 }
 
 export function NatureCarouselPanel() {
-  const scenicSlides = [
-    { id: "s1", title: "Granite hills", meta: "placeholder frame 01" },
-    { id: "s2", title: "Steppe valley", meta: "placeholder frame 02" },
-    { id: "s3", title: "Evening sky", meta: "placeholder frame 03" },
-    { id: "s4", title: "Dry grass texture", meta: "placeholder frame 04" },
-    { id: "s5", title: "Lake mirror", meta: "placeholder frame 05" },
-  ];
-  const [carouselIndex, setCarouselIndex] = useState(0);
-  const [lightboxItem, setLightboxItem] = useState(null);
-  const currentSlide = scenicSlides[carouselIndex];
+  const [activeCard, setActiveCard] = useState(0);
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const [lightboxSrc, setLightboxSrc] = useState(null);
+
+  const goToCard = (idx) => {
+    setActiveCard(idx);
+    setPhotoIndex(0);
+  };
 
   return (
     <>
       <div className="nature-carousel-block">
         <h3 className="nature-block-title">Nature Frames</h3>
-        <div className="nature-carousel-stage">
-          <button
-            className="nature-carousel-btn"
-            onClick={() => setCarouselIndex((prev) => Math.max(prev - 1, 0))}
-            disabled={carouselIndex === 0}
-            aria-label="Previous"
-          >
-            <ChevronIcon direction="left" />
-          </button>
-          <button
-            className="nature-carousel-photo"
-            onClick={() => setLightboxItem(currentSlide)}
-          >
-            <div className="nature-carousel-image">photo placeholder</div>
-            <div className="nature-carousel-meta">
-              <strong>{currentSlide.title}</strong>
-              <span>{currentSlide.meta}</span>
-            </div>
-          </button>
-          <button
-            className="nature-carousel-btn"
-            onClick={() =>
-              setCarouselIndex((prev) =>
-                Math.min(prev + 1, scenicSlides.length - 1),
-              )
-            }
-            disabled={carouselIndex === scenicSlides.length - 1}
-            aria-label="Next"
-          >
-            <ChevronIcon direction="right" />
-          </button>
-        </div>
-        <div className="nature-carousel-indicator">
-          {carouselIndex + 1} / {scenicSlides.length}
+
+        <div className="nature-cards-row">
+          {NATURE_CARDS.map((c, i) => {
+            const isActive = i === activeCard;
+            const displayPhoto = c.photos[isActive ? photoIndex : 0];
+            return (
+              <div
+                key={c.id}
+                className={`nature-card-item${isActive ? " nature-card-item--active" : ""}`}
+                onClick={() => { if (!isActive) goToCard(i); }}
+              >
+                <div
+                  className="nature-card-photo"
+                  style={{ backgroundImage: `url(${displayPhoto})` }}
+                  onClick={(e) => { if (isActive) { e.stopPropagation(); setLightboxSrc(displayPhoto); } }}
+                >
+                  {isActive && (
+                    <>
+                      <button
+                        className="nature-card-arrow nature-card-arrow--left"
+                        onClick={(e) => { e.stopPropagation(); setPhotoIndex((p) => Math.max(p - 1, 0)); }}
+                        disabled={photoIndex === 0}
+                        aria-label="Previous photo"
+                      >
+                        <ChevronIcon direction="left" />
+                      </button>
+                      <button
+                        className="nature-card-arrow nature-card-arrow--right"
+                        onClick={(e) => { e.stopPropagation(); setPhotoIndex((p) => Math.min(p + 1, c.photos.length - 1)); }}
+                        disabled={photoIndex === c.photos.length - 1}
+                        aria-label="Next photo"
+                      >
+                        <ChevronIcon direction="right" />
+                      </button>
+                    </>
+                  )}
+                </div>
+                <div className="nature-card-footer">
+                  <span className="nature-card-name">Nature {i + 1}</span>
+                  {isActive && <span className="nature-card-count">{photoIndex + 1} / {c.photos.length}</span>}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {lightboxItem && (
-        <div className="overlay" onClick={() => setLightboxItem(null)}>
+      {lightboxSrc && (
+        <div className="overlay" onClick={() => setLightboxSrc(null)}>
           <div
             className="modal-inner nature-lightbox"
             onClick={(event) => event.stopPropagation()}
           >
-            <button className="modal-close" onClick={() => setLightboxItem(null)}>
+            <button className="modal-close" onClick={() => setLightboxSrc(null)}>
               ✕ close
             </button>
-            <div className="nature-lightbox-image">image placeholder</div>
-            <div className="nature-lightbox-meta">
-              <h4>{lightboxItem.title}</h4>
-              <p>{lightboxItem.note ?? lightboxItem.meta}</p>
-            </div>
+            <img
+              className="nature-lightbox-image"
+              src={lightboxSrc}
+              alt=""
+            />
           </div>
         </div>
       )}
@@ -1426,6 +1563,42 @@ export function NatureBranchVideoPanel({ isVisible }) {
   );
 }
 
+// ─── Ending panel ─────────────────────────────────────────────────────────────
+
+const outroVideoSrc = `${import.meta.env.BASE_URL}showreel-outro.webm`;
+
+export function EndingPanel({ isVisible }) {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.volume = 0.5;
+    if (isVisible) {
+      v.currentTime = 0;
+      v.play().catch(() => {});
+    } else {
+      v.pause();
+    }
+  }, [isVisible]);
+
+  return (
+    <div className="ending-panel">
+      <video
+        ref={videoRef}
+        className="ending-video"
+        src={outroVideoSrc}
+        playsInline
+        preload="metadata"
+      />
+      <div className="ending-scrim" aria-hidden />
+      <div className="ending-title">
+        <span>I Know a Spot</span>
+      </div>
+    </div>
+  );
+}
+
 // ─── Authors panel ────────────────────────────────────────────────────────────
 
 const _A       = `${import.meta.env.BASE_URL}authors/Alina/`;
@@ -1448,7 +1621,7 @@ const DIARY_ENTRIES = [
         note: "We left very early in the morning, around 4–5 AM. The train ride was surprisingly cozy — we spent most of it discussing ideas and the feeling we wanted the film to capture. We arrived in Ereymentau around 7–8 AM and immediately started filming. Later we managed to get an unexpected interview with the Akim of the city. In the evening, the steppe near the windmills — the sky turned orange and pink, the windmills standing against the horizon.",
         fieldNote: "Train · First frames · City Hall · Windmills at golden hour",
         photoTitle: "April 1",
-        images: [`${_A}DSC04358-web.jpg`, `${_A}DSC00191.jpg`],
+        images: [`${_A}DSC04358-web.jpg`, `${_A}DSC00191-web.webp`],
       },
       {
         date: "Day 1 · May 8",
@@ -1456,7 +1629,7 @@ const DIARY_ENTRIES = [
         note: "The first thing I noticed when we arrived was how much the city had changed since April. Everything had become green — the streets felt more alive, the whole atmosphere softer and warmer. Later we went out into the steppe to film the windmills from a much closer distance. The landscape looked endless, and the movement of the windmills against the open sky created very cinematic shots.",
         fieldNote: "May · Spring · Windmills up close",
         photoTitle: "May 8",
-        images: [`${_A}DSC00120.jpg`, `${_A}DSC00097.jpg`],
+        images: [`${_A}DSC00120-web.webp`, `${_A}DSC00097-web.webp`],
       },
       {
         date: "Day 2 · May 9",
@@ -1464,7 +1637,7 @@ const DIARY_ENTRIES = [
         note: "We drove to the Falcon Mountains early in the morning — the road through the endless steppe already felt like part of the film. The mountains were quiet and massive. We climbed higher while filming; from above, the views were incredible — open skies, distant hills, rocks, endless space. In the evening we reviewed everything we had shot throughout the trip.",
         fieldNote: "Road · Sokoliny Mountains · Behind the scenes",
         photoTitle: "May 9",
-        images: [`${_A}L1001046.jpg`, `${_A}DSC04184-web.jpg`],
+        images: [`${_A}L1001046-web.webp`, `${_A}DSC04184-web.jpg`],
       },
     ],
   },
@@ -1499,7 +1672,7 @@ const DIARY_ENTRIES = [
         note: "Everything outside the window was green and glowing. The city felt completely different — huge trees, air hot and full of flowers, streets already alive at 8 in the morning. We rented a cozy apartment and spent hours walking until we reached the house where my grandparents used to live. That moment felt deeply nostalgic. In the evening we interviewed Aunt Aizhan; listening to her, the city came alive in a new way. We ended with sushi and a series together, sunburnt and quietly happy.",
         fieldNote: "May · Grandparents' house · Aunt Aizhan · Sushi",
         photoTitle: "May 8",
-        imageSrc: `${_Aiganym}Aiganym3.jpg`,
+        imageSrc: `${_Aiganym}Aiganym3-web.webp`,
       },
       {
         date: "Day 2 · May 9",
@@ -1526,7 +1699,7 @@ const DIARY_ENTRIES = [
         note: "We traveled to the city for a scouting trip — not to film, but to understand the location. We arrived in the morning and immediately started exploring, getting a sense of the city's rhythm and potential filming spots. One of the most important moments was an interview with the city's akim, which gave us a broader perspective on the place. We also visited the local museum for historical and cultural context. After hours of walking and meeting residents, we gathered in the evening to build a clearer plan. After 12 hours in the city, we hopped on a train back to Astana.",
         fieldNote: "Scouting · Akim interview · Museum · Train home",
         photoTitle: "April 1",
-        images: [`${_Alima}alima1.JPG`, `${_Alima}alima2.JPG`],
+        images: [`${_Alima}alima1-web.webp`, `${_Alima}alima2-web.webp`],
       },
       {
         date: "Day 1 · May 8",
@@ -1534,7 +1707,7 @@ const DIARY_ENTRIES = [
         note: "5 AM train, arrived at 8. Everything felt quiet and fresh. After checking in, we headed to a teammate's grandmother's house — from there, a clear view of the windmills in the morning light. At one point I walked far into the open steppe alone, carrying my tripod and camera, trying to capture wide empty shots. The city felt most alive in the mornings: cats everywhere, everything green, warm vibrant light. In the evening we ordered food, watched Scream Queens, and all slept on one bed — exhausted but happy.",
         fieldNote: "5:00 AM train · Steppe walk · Windmills · Scream Queens",
         photoTitle: "May 8",
-        images: [`${_Alima}alima3.JPG`, `${_Alima}alima4.JPG`],
+        images: [`${_Alima}alima3-web.webp`, `${_Alima}alima4-web.webp`],
       },
       {
         date: "Day 2 · May 9",
@@ -1542,7 +1715,7 @@ const DIARY_ENTRIES = [
         note: "We woke early for the Falcon Mountains — a two-hour drive with a friend of our teammate. On the way we filmed villages through the window. The landscapes felt unreal; at times it was hard to believe how beautiful everything looked. I had my laptop to transfer footage throughout the day, testing shots and staying organized. By evening we were tired but deeply impressed. The nature, the light, the scale — one of those days where you realize how important it is to capture the moment properly.",
         fieldNote: "Falcon Mountains · Filming villages · 2 hrs drive",
         photoTitle: "May 9",
-        imageSrc: `${_Alima}alima6.JPG`,
+        imageSrc: `${_Alima}alima6-web.webp`,
       },
     ],
   },
@@ -1554,13 +1727,20 @@ const COVER_COLORS = [
   { cover1: "#3b3270", cover2: "#221c4a", spine: "#110c2a", accent: "#2e3aff" },
 ];
 
-export function AuthorsPanel() {
+const DIARY_AUDIO = [
+  `audio/Diary/Alina/AlinaAudio_LivingSomeday.mp3`,
+  `audio/Diary/Aiganym/AiganymAudio_ComebackRemember.mp3`,
+  `audio/Diary/Alima/AlimaAudio_Journey.mp3`,
+];
+
+export function AuthorsPanel({ onDiaryOpen, onDiaryClose }) {
   const [mode, setMode] = useState("covers");
   const [activeIndex, setActiveIndex] = useState(0);
   const [pageIndex, setPageIndex] = useState(0);
   const [animDir, setAnimDir] = useState("open");
   const [flap, setFlap] = useState(null);
   const [lightbox, setLightbox] = useState(null);
+  const audioRef = useRef(null);
 
   useEffect(() => {
     const srcs = [];
@@ -1584,11 +1764,19 @@ export function AuthorsPanel() {
   const wordsL = pageL.note.split(" ");
   const wordsR = pageR?.note.split(" ") ?? [];
 
+  const stopDiaryAudio = () => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; audioRef.current = null; }
+  };
+
   const openDiary = (index) => {
+    stopDiaryAudio();
+    const src = DIARY_AUDIO[index];
+    if (src) audioRef.current = playVoice(`${import.meta.env.BASE_URL}${src}`);
     setAnimDir("open");
     setActiveIndex(index);
     setPageIndex(0);
     setMode("reading");
+    onDiaryOpen?.();
   };
 
   const goToPage = (nextPage, dir) => {
@@ -1762,7 +1950,7 @@ export function AuthorsPanel() {
 
       {/* Navigation below spread */}
       <div className="diary-nav">
-        <button className="diary-nav-back" onClick={() => setMode("covers")}>
+        <button className="diary-nav-back" onClick={() => { stopDiaryAudio(); setMode("covers"); onDiaryClose?.(); }}>
           ← all authors
         </button>
         <div className="diary-nav-dots">
@@ -1849,18 +2037,130 @@ export function PersonModal({ person, onClose }) {
         <div className="modal-person-copy">
           <div className="modal-person-name">{person.name}</div>
           <div className="modal-person-role">{person.role}</div>
-          <div className="modal-person-quote">{person.quote}</div>
-          <div className="modal-person-transcript">
-            <strong>Interview transcript</strong>
-            <p>{person.transcript}</p>
-          </div>
+          {person.quote && <div className="modal-person-quote">{person.quote}</div>}
+          {person.transcript && (
+            <div className="modal-person-transcript">
+              <strong>Interview transcript</strong>
+              <p>{person.transcript}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
+const BASE = import.meta.env.BASE_URL;
+
+const LIFE_BUNCHES = [
+  {
+    items: [
+      { type: "photo", src: `${BASE}lifes/1st_bunch/DSC00143.jpg` },
+      { type: "video", src: `${BASE}lifes/1st_bunch/балкончики.webm` },
+      { type: "video", src: `${BASE}lifes/1st_bunch/вид.webm` },
+      { type: "video", src: `${BASE}lifes/1st_bunch/дома издалека.webm` },
+    ],
+    lines: [
+      "Ereymentau is a place where life moves differently.",
+      "There is no constant noise, no endless rush, no feeling that you are late for something.",
+      "People here live calmly, surrounded by open landscapes, fresh air, and silence that feels comforting rather than empty.",
+    ],
+    textSide: "left",
+  },
+  {
+    items: [
+      { type: "photo", src: `${BASE}lifes/2nd_bunch/DSC00099.jpg` },
+      { type: "photo", src: `${BASE}lifes/2nd_bunch/DSC00110.jpg` },
+      { type: "video", src: `${BASE}lifes/2nd_bunch/артхаус .webm` },
+      { type: "video", src: `${BASE}lifes/2nd_bunch/белье .webm` },
+    ],
+    lines: [
+      "Everyday life in Ereymentau is simple and sincere.",
+      "People spend time with family, work honestly, gather with neighbors, and stay closely connected to nature.",
+      "Children play outside until evening, older generations share stories and traditions, and even ordinary moments feel warm and meaningful.",
+    ],
+    textSide: "right",
+  },
+];
+
+export function LifeFramesPanel({ bunch, isVisible }) {
+  const { items, lines, textSide } = LIFE_BUNCHES[bunch - 1];
+  const [index, setIndex] = useState(0);
+  const videoRef = useRef(null);
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    if (bunch !== 1 || !isVisible) return;
+    audioRef.current = playVoice(`${import.meta.env.BASE_URL}audio/АУДИО МАТЕРИАЛЫ/AlinaVoice/AlinaAudio_InterestingThing.mp3`);
+    return () => { if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; audioRef.current = null; } };
+  }, [isVisible, bunch]);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (isVisible) v.play().catch(() => {});
+    else { v.pause(); v.currentTime = 0; }
+  }, [isVisible, index]);
+
+  const item = items[index];
+
+  return (
+    <div className="life-frames">
+      <div className="life-frames-stage" key={index}>
+        {item.type === "photo" ? (
+          <img className="life-frames-media" src={item.src} alt="" />
+        ) : (
+          <video
+            ref={videoRef}
+            className="life-frames-media"
+            src={item.src}
+            muted
+            loop
+            playsInline
+          />
+        )}
+      </div>
+
+      <div className="life-frames-scrim" aria-hidden />
+
+      <div className={`life-frames-text life-frames-text--${textSide}`}>
+        {lines.map((line, i) => <p key={i}>{line}</p>)}
+      </div>
+
+      <div className="life-frames-nav">
+        <button
+          className="life-frames-arrow"
+          onClick={() => setIndex((i) => Math.max(i - 1, 0))}
+          disabled={index === 0}
+          aria-label="Previous"
+        >
+          <ChevronIcon direction="left" />
+        </button>
+        <span className="life-frames-counter">{index + 1} / {items.length}</span>
+        <button
+          className="life-frames-arrow"
+          onClick={() => setIndex((i) => Math.min(i + 1, items.length - 1))}
+          disabled={index === items.length - 1}
+          aria-label="Next"
+        >
+          <ChevronIcon direction="right" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function MemoryModal({ memory, onClose }) {
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    if (!memory?.audio) return;
+    audioRef.current = playVoice(`${import.meta.env.BASE_URL}${memory.audio}`);
+    return () => {
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; audioRef.current = null; }
+    };
+  }, [memory]);
+
   if (!memory) return null;
   return (
     <div className="overlay" onClick={onClose}>
@@ -1870,7 +2170,13 @@ export function MemoryModal({ memory, onClose }) {
         </button>
         <div className="memory-type">{memory.type}</div>
         <div className="memory-content">{memory.content}</div>
-        <div className="memory-source">{memory.source}</div>
+        {memory.body && <div className="memory-body">{memory.body}</div>}
+        {(memory.source || memory.sourceRole) && (
+          <div className="memory-attribution">
+            {memory.source && <span className="memory-source-name">{memory.source}</span>}
+            {memory.sourceRole && <span className="memory-source-role">{memory.sourceRole}</span>}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { setupGlobalClickSound } from "./sounds";
 import {
   AuthorsPanel,
+  EndingPanel,
   HistoryCarouselPanel,
   HistoryCollagePanel,
   HistoryHeroPanel,
@@ -14,12 +16,13 @@ import {
   NatureGalleryPanel,
   NatureHeroPanel,
   OpeningSection,
+  LifeFramesPanel,
   PeopleGridPanel,
   PeopleHeroPanel,
   PersonModal,
   StoryProgressBar,
 } from "./components";
-import { CHAPTERS, MEMORIES } from "./data";
+import { CHAPTERS, MEMORIES, PANEL_MEMORIES } from "./data";
 import { HISTORY_VIDEO_BLOCKS } from "./data/historyAssets";
 
 const INTRO_TEXT =
@@ -36,9 +39,10 @@ const STORY_STEPS = [
   { id: "opening", label: "Opening" },
   { id: "map-hub", label: "Map" },
   { id: "chapter-history", label: "History" },
-  { id: "chapter-people", label: "People" },
+  { id: "chapter-people", label: "Life" },
   { id: "chapter-nature", label: "Nature" },
   { id: "chapter-authors", label: "Authors" },
+  { id: "ending", label: "Ending" },
 ];
 
 const BASE_PANELS = [
@@ -53,11 +57,14 @@ const BASE_PANELS = [
   { id: "history-video-1",   storyStep: "chapter-history" },
   { id: "people-hero",       storyStep: "chapter-people"  },
   { id: "people-grid",       storyStep: "chapter-people"  },
+  { id: "life-frames-1",     storyStep: "chapter-people"  },
+  { id: "life-frames-2",     storyStep: "chapter-people"  },
   { id: "nature-hero",       storyStep: "chapter-nature"  },
   { id: "nature-gallery",    storyStep: "chapter-nature"  },
   { id: "nature-carousel",   storyStep: "chapter-nature"  },
   { id: "nature-video",      storyStep: "chapter-nature"  },
   { id: "authors",           storyStep: "chapter-authors" },
+  { id: "ending",            storyStep: "ending"          },
 ];
 
 const MAP_DRAW_DURATION_MS = 3200;
@@ -103,6 +110,10 @@ export default function App() {
   const [cursor, setCursor] = useState({ x: 0, y: 0, rx: 0, ry: 0 });
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") ?? "dark");
+  const [loadingVisible, setLoadingVisible] = useState(true);
+  const [loadingFading, setLoadingFading] = useState(false);
+  const [vhsOpen, setVhsOpen] = useState(false);
+  const [isDiaryOpen, setIsDiaryOpen] = useState(false);
   const rafRef = useRef(0);
   const trackRef = useRef(null);
   const typewriterStarted = useRef(false);
@@ -115,10 +126,24 @@ export default function App() {
   const moonTransform = `translate(${parallax.x * 0.6}px, ${parallax.y * 0.6}px)`;
   const mapTransform = `translate(${parallax.x * 0.3}px, ${parallax.y * 0.3}px)`;
 
+  useEffect(() => setupGlobalClickSound(), []);
+
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    const startFade = () => {
+      setLoadingFading(true);
+      setTimeout(() => setLoadingVisible(false), 900);
+    };
+    if (document.readyState === "complete") {
+      setTimeout(startFade, 800);
+    } else {
+      window.addEventListener("load", () => setTimeout(startFade, 800), { once: true });
+    }
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-nav-style", "cards");
@@ -251,8 +276,9 @@ export default function App() {
   };
 
   const openMemory = () => {
-    const randomMemory = MEMORIES[Math.floor(Math.random() * MEMORIES.length)];
-    setMemoryModal(randomMemory);
+    const idx = PANEL_MEMORIES[activePanelId];
+    if (idx === undefined) return;
+    setMemoryModal(MEMORIES[idx]);
   };
 
   const goToStoryStep = (stepId) => {
@@ -271,8 +297,36 @@ export default function App() {
     goToStoryStep(STORY_STEPS[nextIndex].id);
   };
 
+  const panelIndex = BASE_PANELS.findIndex((p) => p.id === activePanelId);
+
+  const goPanelOffset = (offset) => {
+    const next = panelIndex + offset;
+    if (next < 0 || next >= BASE_PANELS.length) return;
+    scrollToPanel(BASE_PANELS[next].id);
+  };
+
   return (
     <>
+      {loadingVisible && (
+        <div className={`loading-screen${loadingFading ? " loading-screen--fade" : ""}`}>
+          <video
+            className="loading-screen__video"
+            autoPlay
+            muted
+            playsInline
+            loop
+          >
+            <source src={`${import.meta.env.BASE_URL}night-loading.webm`} type="video/webm" />
+            <source src={`${import.meta.env.BASE_URL}night-loading.mp4`} type="video/mp4" />
+          </video>
+          <div className="loading-screen__overlay" />
+          <div className="loading-screen__title">I know a spot</div>
+          <div className="loading-screen__dots">
+            <span /><span /><span />
+          </div>
+        </div>
+      )}
+
       <div id="grain" />
       <div
         id="cursor-dot"
@@ -297,12 +351,14 @@ export default function App() {
         </svg>
         <span>Map</span>
       </button>
-      <button
-        className={`memory-btn${chapterVisible ? " visible" : ""}`}
-        onClick={openMemory}
-      >
-        ✦ memory
-      </button>
+      {PANEL_MEMORIES[activePanelId] !== undefined && (
+        <button
+          className={`memory-btn${chapterVisible ? " visible" : ""}`}
+          onClick={openMemory}
+        >
+          ✦ memory
+        </button>
+      )}
 
       {/* Horizontal scroll track */}
       <div ref={trackRef} className="h-scroll-track">
@@ -330,6 +386,7 @@ export default function App() {
             mapPoints={mapPoints}
             mapHubPhase={mapHubPhase}
             mapDrawRun={mapDrawRun}
+            isVisible={activePanelId === "map-hub"}
           />
         </div>
 
@@ -342,7 +399,7 @@ export default function App() {
         </div>
 
         <div className="h-panel h-panel--scrollable" data-panel-id="history-carousel">
-          <HistoryCarouselPanel />
+          <HistoryCarouselPanel isVisible={activePanelId === "history-carousel"} />
         </div>
 
         <div className="h-panel" data-panel-id="history-video-0">
@@ -353,7 +410,7 @@ export default function App() {
         </div>
 
         <div className="h-panel" data-panel-id="museum-video">
-          <MuseumVideoSection />
+          <MuseumVideoSection isVisible={activePanelId === "museum-video"} />
         </div>
 
         <div className="h-panel" data-panel-id="history-video-1">
@@ -368,7 +425,15 @@ export default function App() {
         </div>
 
         <div className="h-panel" data-panel-id="people-grid">
-          <PeopleGridPanel onOpenPerson={setPersonModal} />
+          <PeopleGridPanel onOpenPerson={setPersonModal} isVisible={activePanelId === "people-grid"} />
+        </div>
+
+        <div className="h-panel" data-panel-id="life-frames-1">
+          <LifeFramesPanel bunch={1} isVisible={activePanelId === "life-frames-1"} />
+        </div>
+
+        <div className="h-panel" data-panel-id="life-frames-2">
+          <LifeFramesPanel bunch={2} isVisible={activePanelId === "life-frames-2"} />
         </div>
 
         <div className="h-panel" data-panel-id="nature-hero">
@@ -376,7 +441,7 @@ export default function App() {
         </div>
 
         <div className="h-panel h-panel--scrollable" data-panel-id="nature-gallery">
-          <NatureGalleryPanel />
+          <NatureGalleryPanel onVhsOpen={setVhsOpen} />
         </div>
 
         <div className="h-panel h-panel--scrollable" data-panel-id="nature-carousel">
@@ -388,17 +453,45 @@ export default function App() {
         </div>
 
         <div className="h-panel h-panel--scrollable" data-panel-id="authors">
-          <AuthorsPanel />
+          <AuthorsPanel
+            onDiaryOpen={() => setIsDiaryOpen(true)}
+            onDiaryClose={() => setIsDiaryOpen(false)}
+          />
+        </div>
+
+        <div className="h-panel" data-panel-id="ending">
+          <EndingPanel isVisible={activePanelId === "ending"} />
         </div>
       </div>
+
+      {activePanelId !== "opening" && !isDiaryOpen && (
+        <>
+          <button
+            className="side-nav-btn side-nav-btn--prev"
+            onClick={() => goPanelOffset(-1)}
+            disabled={panelIndex <= 0 || vhsOpen}
+            style={vhsOpen ? { opacity: 0.25, pointerEvents: "none" } : undefined}
+            aria-label="Previous"
+          >
+            PREV
+          </button>
+          <button
+            className="side-nav-btn side-nav-btn--next"
+            onClick={() => goPanelOffset(1)}
+            disabled={panelIndex >= BASE_PANELS.length - 1 || vhsOpen}
+            style={vhsOpen ? { opacity: 0.25, pointerEvents: "none" } : undefined}
+            aria-label="Next"
+          >
+            NEXT
+          </button>
+        </>
+      )}
 
       <StoryProgressBar
         visible={showStoryBar}
         steps={STORY_STEPS}
         currentIndex={storyIndex < 0 ? 0 : storyIndex}
         onSelectStep={goToStoryStep}
-        onPrev={() => goToStoryOffset(-1)}
-        onNext={() => goToStoryOffset(1)}
       />
 
       <PersonModal person={personModal} onClose={() => setPersonModal(null)} />
