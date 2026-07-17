@@ -1914,6 +1914,88 @@ body {
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.82);
   pointer-events: none;
+  opacity: 1;
+  transition: opacity 1.6s ease;
+}
+
+.ending-title.is-hidden {
+  opacity: 0;
+}
+
+.ending-credits {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.8s ease;
+}
+
+.ending-credits.is-active {
+  opacity: 1;
+}
+
+.ending-credits-track {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.6rem;
+  padding-bottom: 6rem;
+  text-align: center;
+  animation-name: ending-credits-scroll;
+  animation-duration: 32s;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  animation-play-state: paused;
+}
+
+.ending-credits.is-active .ending-credits-track {
+  animation-play-state: running;
+}
+
+.ending-credits-heading {
+  font-family: "Cormorant Garamond", serif;
+  font-style: italic;
+  font-size: clamp(1.5rem, 2.8vw, 2rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.88);
+  margin-bottom: 1.4rem;
+}
+
+.ending-credits-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ending-credits-role {
+  font-family: "Tenor Sans", system-ui, sans-serif;
+  font-size: clamp(0.7rem, 1.1vw, 0.82rem);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(var(--tan-rgb), 0.85);
+}
+
+.ending-credits-name {
+  font-family: "Cormorant Garamond", serif;
+  font-size: clamp(1rem, 1.6vw, 1.3rem);
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.4;
+}
+
+@keyframes ending-credits-scroll {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(calc(-100% - 100dvh));
+  }
 }
 
 .authors-section {

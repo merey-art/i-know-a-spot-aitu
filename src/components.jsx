@@ -1567,8 +1567,23 @@ export function NatureBranchVideoPanel({ isVisible }) {
 
 const outroVideoSrc = `${import.meta.env.BASE_URL}showreel-outro.webm`;
 
+const CREDITS_START_TIME = 38; // seconds into showreel-outro.webm
+
+const CREDITS = [
+  { role: "Directed by", names: ["Aiganym Bulatova", "Alima Mahymetova", "Alina Yuldazbayeva"] },
+  { role: "Produced by", names: ["Aiganym Bulatova"] },
+  { role: "Cinematography", names: ["Alima Mahymetova"] },
+  { role: "Editing", names: ["Alima Mahymetova", "Alina Yuldazbayeva"] },
+  { role: "Sound Design", names: ["Aiganym Bulatova"] },
+  { role: "Color Grading", names: ["Alima Mahymetova"] },
+  { role: "Photography", names: ["Alima Makhymetova", "Aiganym Bulatova", "Alina Yuldazbayeva"] },
+  { role: "Featuring", names: ["Talgat Akhmetov", "Aizhan Kuanova", "Kulbakhsha Bukurova"] },
+  { role: "Archival Materials Courtesy of", names: ["Ereymentau Historical Museum", "Private Family Archives"] },
+];
+
 export function EndingPanel({ isVisible }) {
   const videoRef = useRef(null);
+  const [creditsActive, setCreditsActive] = useState(false);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -1579,7 +1594,18 @@ export function EndingPanel({ isVisible }) {
       v.play().catch(() => {});
     } else {
       v.pause();
+      setCreditsActive(false);
     }
+  }, [isVisible]);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || !isVisible) return;
+    const handleTimeUpdate = () => {
+      if (v.currentTime >= CREDITS_START_TIME) setCreditsActive(true);
+    };
+    v.addEventListener("timeupdate", handleTimeUpdate);
+    return () => v.removeEventListener("timeupdate", handleTimeUpdate);
   }, [isVisible]);
 
   return (
@@ -1592,8 +1618,21 @@ export function EndingPanel({ isVisible }) {
         preload="metadata"
       />
       <div className="ending-scrim" aria-hidden />
-      <div className="ending-title">
+      <div className={`ending-title${creditsActive ? " is-hidden" : ""}`}>
         <span>I Know a Spot</span>
+      </div>
+      <div className={`ending-credits${creditsActive ? " is-active" : ""}`} aria-hidden={!creditsActive}>
+        <div className="ending-credits-track">
+          <div className="ending-credits-heading">I Know a Spot</div>
+          {CREDITS.map((block) => (
+            <div className="ending-credits-block" key={block.role}>
+              <div className="ending-credits-role">{block.role}</div>
+              {block.names.map((name) => (
+                <div className="ending-credits-name" key={name}>{name}</div>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
